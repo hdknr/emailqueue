@@ -4,5 +4,6 @@ enum34
 south
 Celery
 boto
+django-tastypie
 -e git+https://github.com/hdknr/djado.git#egg=djado
 -e git+https://github.com/hdknr/pycommand.git#egg=pycommand

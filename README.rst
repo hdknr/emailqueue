@@ -1,4 +1,4 @@
-emailqueue - Promotion Tool
+emailqueue - Email Handler
 ====================================
 
 - under development
