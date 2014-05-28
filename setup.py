@@ -38,7 +38,7 @@
 #
 
 ######################################################
-NAME = 'emailqeueue'
+NAME = 'emailqueue'
 USER = 'hdknr'
 DESCRIPTION = 'Email Handler'
 PACKAGES = ['emailqueue', ]
