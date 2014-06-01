@@ -81,10 +81,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 ############################################################
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 INSTALLED_APPS += (
     'emailqueue',
     'gunicorn',     # python manage.py run_gunicorn
     'south',
+)
+
+MIDDLEWARE_CLASSES += (
+    'app.middleware.SettingsMiddleware',
 )
 
 # run_gunicorn requires LOGGING
