@@ -84,6 +84,7 @@ STATIC_URL = '/static/'
 INSTALLED_APPS += (
     'emailqueue',
     'gunicorn',     # python manage.py run_gunicorn
+    'south',
 )
 
 # run_gunicorn requires LOGGING
