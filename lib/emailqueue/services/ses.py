@@ -1,4 +1,5 @@
 from emailqueue.services import Api as ServiceApi
+from emailqueue.models import Notification
 import boto
 
 class Api(ServiceApi):
@@ -23,3 +24,50 @@ class Api(ServiceApi):
             source=email.address_from,
             destinations=email.address_to
         )
+
+
+from tastypie.resources import Resource
+from tastypie.serializers import Serializer
+from tastypie.http import HttpCreated
+from django.conf.urls import url 
+from django.core.urlresolvers import reverse
+import urlparse
+import json
+
+
+class SingletonResource(Resource):
+
+    @classmethod
+    def url_name(cls):
+        return "%s_detail" % cls.Meta.resource_name
+
+    def base_urls(self):
+        """
+        The standard URLs this ``Resource`` should respond to.
+        """
+        return [
+            url(
+                r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, ''),
+                self.wrap_view('dispatch_detail'),
+                name=self.url_name())
+        ]
+
+    @classmethod
+    def url(cls, host='', *args, **kwargs):
+        kwargs['resource_name'] = cls.Meta.resource_name
+        kwargs = dict(
+            tuple([(k, v) for k, v in kwargs.items() if v is not None]))
+        ret = urlparse.urljoin(host, reverse(cls.url_name(), kwargs=kwargs))
+        return ret
+
+
+class SnsResource(SingletonResource):
+
+    class Meta:
+        allowed_methods = ['post',]
+        resource_name = 'sns'
+
+    def post_detail(self, request, **kwargs):
+        data = json.loads(request.body) 
+        Notification(message= request.body).save()
+        return HttpCreated()

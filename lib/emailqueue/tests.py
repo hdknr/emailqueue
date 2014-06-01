@@ -1,3 +1,22 @@
 from django.test import TestCase
+from django.core.urlresolvers import reverse
+from urllib import urlencode
 
-# Create your tests here.
+
+class NotificationTest(TestCase):
+    def post_json(self, url, jstr="{}", status_code=200, user=None,
+             meta={}, query={}):
+        meta['content_type']='application/json'
+
+        if query:
+            url = url + "?" + urlencode(query)
+
+        response = self.client.post(url, data=jstr, **meta)
+        self.assertEqual(response.status_code, status_code)
+        return response
+
+    def test_simple(self):
+        from emailqueue.services.ses import SnsResource
+        url = SnsResource.url()
+        res = self.post_json(url, status_code=201)
+         

@@ -37,6 +37,7 @@ class Service(BaseModel):
     key = models.CharField(_("Service Key"),  **CREDENTIAL(100))
     secret = models.CharField(_("Service Secret"),  **CREDENTIAL(100))
     region = models.CharField(_("Service Region"),  **CREDENTIAL(50))
+    notify_uri = models.CharField(_("Notify URI"),  **CREDENTIAL(200))
 
     def __init__(self, *args, **kwargs):
         super(Service, self).__init__(*args, **kwargs)
@@ -53,6 +54,11 @@ class Service(BaseModel):
 
     def send(self, email):
         return self.service.send(email)
+
+
+
+class Notification(BaseModel):
+    message = models.TextField(_(u'Notification Message'))
 
 
 class Email(BaseModel):
