@@ -4,9 +4,10 @@ from urllib import urlencode
 
 
 class NotificationTest(TestCase):
-    def post_json(self, url, jstr="{}", status_code=200, user=None,
-             meta={}, query={}):
-        meta['content_type']='application/json'
+    def post_json(
+            self, url, jstr="{}", status_code=200, user=None,
+            meta={}, query={}):
+        meta['content_type'] = 'application/json'
 
         if query:
             url = url + "?" + urlencode(query)
@@ -16,7 +17,9 @@ class NotificationTest(TestCase):
         return response
 
     def test_simple(self):
-        from emailqueue.services.ses import SnsResource
-        url = SnsResource.url()
-        res = self.post_json(url, status_code=201)
-         
+        from emailqueue.models import Service, ServiceType, Notification
+        service = Service(service_type=ServiceType.ses.value)
+        service.save()
+        url = service.service.notify_path()
+        self.post_json(url, status_code=201)
+        self.assertEqual(Notification.objects.count(), 1)

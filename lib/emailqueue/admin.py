@@ -17,10 +17,11 @@ class ServiceAdmin(admin.ModelAdmin):
     list_display = tuple([f.name for f in Service._meta.fields])
 
     def save_model(self, request, obj, form, change):
-        obj.notify_uri = request.build_absolute_uri(
-            SnsResource.url()
-        )
         super(ServiceAdmin, self).save_model(request, obj, form, change)
+        obj.notify_uri = request.build_absolute_uri(
+            obj.service.notify_path()
+        )
+        obj.save()
 
 
 for model in get_models(get_app(__name__.split('.')[-2:][0])):

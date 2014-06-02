@@ -1,6 +1,7 @@
 from emailqueue.services import Api as ServiceApi
-from emailqueue.models import Notification
+from emailqueue.models import Notification, Service
 import boto
+
 
 class Api(ServiceApi):
     name = "Amazon SES"
@@ -28,14 +29,17 @@ class Api(ServiceApi):
     def verify(self, address):
         self.connection.verify_email_address(address)
 
+    def notify_path(self):
+        return SnsResource().get_resource_uri() + "%d/" % self.service.id
+
 
 from tastypie.resources import Resource
-from tastypie.serializers import Serializer
+#from tastypie.serializers import Serializer
 from tastypie.http import HttpCreated
-from django.conf.urls import url 
+from django.conf.urls import url
 from django.core.urlresolvers import reverse
 import urlparse
-import json
+#:import json
 
 
 class SingletonResource(Resource):
@@ -64,13 +68,14 @@ class SingletonResource(Resource):
         return ret
 
 
-class SnsResource(SingletonResource):
+class SnsResource(Resource):
 
     class Meta:
-        allowed_methods = ['post',]
+        allowed_methods = ['post', ]
         resource_name = 'sns'
 
-    def post_detail(self, request, **kwargs):
-        data = json.loads(request.body) 
-        Notification(message= request.body).save()
+    def post_detail(self, request, pk=None, resource_name=None, **kwargs):
+        Notification(
+            service=Service.objects.get(id=pk),
+            message=request.body).save()
         return HttpCreated()
