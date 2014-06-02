@@ -25,6 +25,9 @@ class Api(ServiceApi):
             destinations=email.address_to
         )
 
+    def verify(self, address):
+        self.connection.verify_email_address(address)
+
 
 from tastypie.resources import Resource
 from tastypie.serializers import Serializer

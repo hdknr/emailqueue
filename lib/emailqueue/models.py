@@ -30,6 +30,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
+
 class Service(BaseModel):
     service_type = models.IntegerField(
         _(u'Service Type'), choices=ServiceType.choices,)
@@ -51,10 +52,8 @@ class Service(BaseModel):
             self._service = getattr(mod, 'Api')(self)
         return self._service
 
-
     def send(self, email):
         return self.service.send(email)
-
 
 
 class Notification(BaseModel):

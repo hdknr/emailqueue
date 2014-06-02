@@ -108,3 +108,17 @@ class Command(BaseCommand, PyCommand):
         def run(self, params, **options):
             for email in Email.objects.filter(id__in=params.id):
                 email.send()
+
+
+    class AddressVerify(SubCommand):
+        name = "verify_address"
+        description = "Verify an Email Address"
+        args = [
+            (('id',), dict(nargs=1, type=int, help="Service ID")),
+            (('address',), dict(nargs='+', help="Email Address")),
+        ]
+
+        def run(self, params, **options):
+            service = Service.objects.get(id=params.id[0])
+            for addr in params.address:
+                service.service.verify(addr)
