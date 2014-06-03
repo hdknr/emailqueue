@@ -8,6 +8,7 @@ from email import Charset
 from emailqueue.utils import Enum
 import uuid
 from hashlib import sha256
+import json
 
 ServiceType = Enum(
     'ServiceType',
@@ -40,6 +41,12 @@ class Service(BaseModel):
     secret = models.CharField(_("Service Secret"),  **CREDENTIAL(100))
     region = models.CharField(_("Service Region"),  **CREDENTIAL(50))
     notify_uri = models.CharField(_("Notify URI"),  **CREDENTIAL(200))
+    public_key = models.TextField(_(u'Public Key'), **NULLABLE())
+
+    def __unicode__(self):
+        return "%s" % (
+            ServiceType(self.service_type).name
+        )
 
     def __init__(self, *args, **kwargs):
         super(Service, self).__init__(*args, **kwargs)
@@ -60,6 +67,41 @@ class Service(BaseModel):
 class Notification(BaseModel):
     service = models.ForeignKey(Service, **NULLABLE())
     message = models.TextField(_(u'Notification Message'))
+
+    def __init__(self, *args, **kwargs):
+        super(Notification, self).__init__(*args, **kwargs)
+        self._json_message = None
+
+    def verify(self):
+        if self.service:
+            return self.service.service.verify_notification(self)
+        return False
+
+    def process(self):
+        self.service and self.service.service.process_notification(self)
+
+    @property
+    def json_message(self):
+        if not self._json_message:
+            try:
+                self._json_message = json.loads(self.message)
+            except:
+                pass
+        return self._json_message
+
+
+class BounceAddress(BaseModel):
+    service = models.ForeignKey(Service)
+    address = models.EmailField(db_index=True)
+    count = models.IntegerField(default=0)
+
+    def __unicode__(self):
+        return self.address or ''
+
+
+class BounceLog(BaseModel):
+    address = models.ForeignKey(BounceAddress)
+    message = models.TextField()
 
 
 class Email(BaseModel):

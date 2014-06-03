@@ -3,7 +3,10 @@
 from django.core.management.base import BaseCommand
 from pycommand.command import Command as PyCommand, SubCommand
 #from django.utils.translation import ugettext as _
-from emailqueue.models import Service, Email, Notification
+from emailqueue.models import (
+    Service, Email, Notification,
+    BounceAddress,
+)
 import sys
 
 
@@ -128,3 +131,24 @@ class Command(BaseCommand, PyCommand):
         def run(self, params, **options):
             notification = Notification.objects.get(id=params.id[0])
             print notification.verify()
+
+    class NotifiationProcess(SubCommand):
+        name = "process_notification"
+        description = "Process Notification"
+        args = [
+            (('id',), dict(nargs=1, type=int, help="Notification ID")),
+        ]
+
+        def run(self, params, **options):
+            notification = Notification.objects.get(id=params.id[0])
+            notification.process()
+
+    class BounceAddressList(SubCommand):
+        name = "list_bounce_address"
+        description = "List Bounce Address"
+        args = [
+        ]
+
+        def run(self, params, **options):
+            for obj in BounceAddress.objects.all():
+                print obj.id, ":", obj.address, obj.count, obj.service

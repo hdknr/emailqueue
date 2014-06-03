@@ -1,5 +1,5 @@
 from emailqueue.services import Api as ServiceApi
-from emailqueue.models import Notification, Service
+from emailqueue.models import Notification, Service, BounceLog
 import boto
 import json
 import requests
@@ -89,7 +89,11 @@ class Api(ServiceApi):
         return SnsResource().get_resource_uri() + "%d/" % self.service.id
 
     def verify_notification(self, notification):
-        jobj = json.loads(notification.message)
+        jobj = notification.json_message
+
+        if not jobj:
+            return False
+
         sinput = NOTIFICATION_SIGNING_INPUT(jobj)
 
         if not self.service.public_key:
@@ -100,39 +104,30 @@ class Api(ServiceApi):
         return verify_pycrypto(
             self.service.public_key, sinput, jobj['Signature'])
 
+    def process_notification(self, notification):
+        if not self.verify_notification(notification):
+            return
+        #: TODO: check other information...
+
+        jobj = notification.json_message
+        message = jobj and json.loads(jobj.get('Message', '{}'))
+        if message and message.get('notificationType') == 'Bounce':
+            bounces = message.get('bounce', {}).get('bouncedRecipients', [])
+            for bounce in bounces:
+                addr = bounce.get('emailAddress', None)
+                if not addr:
+                    continue
+
+                address, created = \
+                    self.service.bounceaddress_set.get_or_create(
+                        address=addr
+                    )
+                BounceLog(address=address, message=json.dumps(bounce)).save()
+                # TODO: recalcualte BounceAddress count
+
 
 from tastypie.resources import Resource
-#from tastypie.serializers import Serializer
 from tastypie.http import HttpCreated
-from django.conf.urls import url
-from django.core.urlresolvers import reverse
-import urlparse
-
-
-class SingletonResource(Resource):
-
-    @classmethod
-    def url_name(cls):
-        return "%s_detail" % cls.Meta.resource_name
-
-    def base_urls(self):
-        """
-        The standard URLs this ``Resource`` should respond to.
-        """
-        return [
-            url(
-                r"^(?P<resource_name>%s)%s$" % (self._meta.resource_name, ''),
-                self.wrap_view('dispatch_detail'),
-                name=self.url_name())
-        ]
-
-    @classmethod
-    def url(cls, host='', *args, **kwargs):
-        kwargs['resource_name'] = cls.Meta.resource_name
-        kwargs = dict(
-            tuple([(k, v) for k, v in kwargs.items() if v is not None]))
-        ret = urlparse.urljoin(host, reverse(cls.url_name(), kwargs=kwargs))
-        return ret
 
 
 class SnsResource(Resource):
