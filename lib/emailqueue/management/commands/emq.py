@@ -3,7 +3,7 @@
 from django.core.management.base import BaseCommand
 from pycommand.command import Command as PyCommand, SubCommand
 #from django.utils.translation import ugettext as _
-from emailqueue.models import Service, ServiceType, Email
+from emailqueue.models import Service, Email, Notification
 import sys
 
 
@@ -23,7 +23,6 @@ class Command(BaseCommand, PyCommand):
             for service in Service.objects.all():
                 print service.id, ":", service.service.name, service.key
 
-
     class EmailCreate(SubCommand):
         name = "create_email"
         description = "Describe an Email"
@@ -32,33 +31,33 @@ class Command(BaseCommand, PyCommand):
             (('addr_from',), dict(nargs=1,  help="From Address")),
             (('addr_to',), dict(nargs=1,  help="To Address")),
             (('subject',), dict(nargs=1,  help="Subject")),
-            (('message',), dict(nargs='?', default="",  help="Message")),
-            (('--schedule', '-S'), dict(default=None,  help="Schedule to Send Message")),
+            (('message',), dict(nargs='?', default="", help="Message")),
+            (('--schedule', '-S'),
+             dict(default=None, help="Schedule to Send Message")),
             (('--file', '-F'), dict(default=None, help="Message File")),
-            
+
         ]
 
         def run(self, params, **options):
-            if params.file  == "stdin":
+            if params.file == "stdin":
                 if sys.stdin.isatty():
                     print _(u"stdin is not specified.")
-                    return 
+                    return
                 params.message = sys.stdin.read()
             elif params.file:
-                params.message = open(paramrs.file).read()
+                params.message = open(params.file).read()
 
             #: TODO: schedule is parsed datatime
- 
+
             email = Email.create_email(
                 service=params.id[0],
-                addr_from=params.addr_from[0], 
-                addr_to=params.addr_to[0], 
+                addr_from=params.addr_from[0],
+                addr_to=params.addr_to[0],
                 subject=params.subject[0],
                 message=params.message,
                 schedule=params.schedule)
 
             print email.id, email.message_id_hash
-
 
     class EmailList(SubCommand):
         name = "list_email"
@@ -69,8 +68,7 @@ class Command(BaseCommand, PyCommand):
 
         def run(self, params, **options):
             for email in Email.objects.filter(service__id=params.id[0]):
-                print email.id, ":", email.message_id_hash 
-
+                print email.id, ":", email.message_id_hash
 
     class EmailDescription(SubCommand):
         name = "desc_email"
@@ -86,7 +84,6 @@ class Command(BaseCommand, PyCommand):
             print "Return Path:", email.address_return_path
             print "Raw Message:\n\n", email.message
 
-
     class EmailDelete(SubCommand):
         name = "delete_email"
         description = "Delete an Email"
@@ -96,7 +93,6 @@ class Command(BaseCommand, PyCommand):
 
         def run(self, params, **options):
             Email.objects.filter(id__in=params.id).delete()
-
 
     class EmailSend(SubCommand):
         name = "send_email"
@@ -108,7 +104,6 @@ class Command(BaseCommand, PyCommand):
         def run(self, params, **options):
             for email in Email.objects.filter(id__in=params.id):
                 email.send()
-
 
     class AddressVerify(SubCommand):
         name = "verify_address"
@@ -122,3 +117,14 @@ class Command(BaseCommand, PyCommand):
             service = Service.objects.get(id=params.id[0])
             for addr in params.address:
                 service.service.verify(addr)
+
+    class NotifiationVerify(SubCommand):
+        name = "verify_notification"
+        description = "Verify an Notification"
+        args = [
+            (('id',), dict(nargs=1, type=int, help="Notification ID")),
+        ]
+
+        def run(self, params, **options):
+            notification = Notification.objects.get(id=params.id[0])
+            print notification.verify()

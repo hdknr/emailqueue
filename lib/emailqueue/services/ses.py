@@ -1,6 +1,62 @@
 from emailqueue.services import Api as ServiceApi
 from emailqueue.models import Notification, Service
 import boto
+import json
+import requests
+
+# http://docs.aws.amazon.com/sns/latest/dg/
+# SendMessageToHttp.verify.signature.html
+
+NOTIFICATION_SIGNING_INPUT_KEY = [
+    "Message",
+    "MessageId",
+    "Subject",
+    "SubscribeURL",
+    "Timestamp",
+    "Token",
+    "TopicArn",
+    "Type",
+]
+
+NOTIFICATION_SIGNING_INPUT = lambda jobj:\
+    "".join([
+        "%s\n%s\n" % (k, jobj.get(k))
+        for k in NOTIFICATION_SIGNING_INPUT_KEY
+        if k in jobj
+    ])
+
+
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA
+from Crypto.Util.asn1 import DerSequence
+from Crypto.Signature import PKCS1_v1_5
+#from Crypto.Util import number
+
+from base64 import b64decode, standard_b64decode
+
+
+def import_pubkey_from_x509(pem):
+    b64der = ''.join(pem.split('\n')[1:][:-2])
+    cert = DerSequence()
+    cert.decode(b64decode(b64der))
+
+    tbs_certificate = DerSequence()
+    tbs_certificate.decode(cert[0])
+
+    subject_public_key_info = tbs_certificate[6]
+
+    return RSA.importKey(subject_public_key_info)
+
+
+def verify_pycrypto(pem, signing_input, b64signature):
+    pub = import_pubkey_from_x509(pem)
+    verifier = PKCS1_v1_5.new(pub)
+
+    sig = standard_b64decode(b64signature)
+    signing_input = signing_input.encode('utf8')
+    dig = SHA.new(signing_input)
+
+    return verifier.verify(dig, sig)
 
 
 class Api(ServiceApi):
@@ -32,6 +88,18 @@ class Api(ServiceApi):
     def notify_path(self):
         return SnsResource().get_resource_uri() + "%d/" % self.service.id
 
+    def verify_notification(self, notification):
+        jobj = json.loads(notification.message)
+        sinput = NOTIFICATION_SIGNING_INPUT(jobj)
+
+        if not self.service.public_key:
+            res = requests.get(jobj['SigningCertURL'])
+            self.service.public_key = res.text
+            self.service.save()
+
+        return verify_pycrypto(
+            self.service.public_key, sinput, jobj['Signature'])
+
 
 from tastypie.resources import Resource
 #from tastypie.serializers import Serializer
@@ -39,7 +107,6 @@ from tastypie.http import HttpCreated
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
 import urlparse
-#:import json
 
 
 class SingletonResource(Resource):
