@@ -97,3 +97,9 @@ MIDDLEWARE_CLASSES += (
 LOGGING = {
     'version': 1,
 }
+######
+#
+INSTALLED_APPS += (
+    'djcelery',
+    'kombu.transport.django',
+)
