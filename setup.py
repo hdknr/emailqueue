@@ -41,7 +41,7 @@
 NAME = 'emailqueue'
 USER = 'hdknr'
 DESCRIPTION = 'Email Handler'
-PACKAGES = ['emailqueue', 'emailsmtp', ]
+PACKAGES = ['emailqueue', 'emailsmtp', 'emailses', ]
 VERSION = "0.1"
 LICENSE = 'Simplfied BSD License'
 AUTHOR = 'Hideki Nara of LaFoaglia,Inc.'
