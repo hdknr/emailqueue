@@ -7,5 +7,3 @@ django-celery
 boto
 django-tastypie
 pycrypto
--e git+https://github.com/hdknr/djado.git#egg=djado
--e git+https://github.com/hdknr/pycommand.git#egg=pycommand

@@ -85,6 +85,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 INSTALLED_APPS += (
     'emailqueue',
+    'emailsmtp',
+    'emailses',
     'gunicorn',     # python manage.py run_gunicorn
     'south',
 )
