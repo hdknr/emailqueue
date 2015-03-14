@@ -4,10 +4,13 @@ from django.core.mail import get_connection
 from celery import current_task
 from celery.utils.log import get_task_logger
 from celery.task import task
-logger = get_task_logger('emailsmtp')
 
 import traceback
 
+import models
+
+
+logger = get_task_logger('emailsmtp')
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
                   'django.core.mail.backends.smtp.EmailBackend')
 
@@ -42,3 +45,12 @@ def send_raw_message(
             "{0}:Failed to send email message to {1}, retrying.".format(
                 'send_email_instring', recipients))
         send_raw_message.retry(exc=e)
+
+
+@task
+def save_inbound(sender, recipient, raw_message):
+    inbound = models.Inbound(
+        sender=sender, recipient=recipient,
+        raw_message=raw_message)
+    inbound.save()
+    return inbound.id
