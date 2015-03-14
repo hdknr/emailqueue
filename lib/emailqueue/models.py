@@ -1,28 +1,25 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.importlib import import_module
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 
-from email.mime.text import MIMEText
-from email import Charset
+import os
+# from email.mime.text import MIMEText
+# from email import Charset
 
-from emailqueue.utils import Enum
-import uuid
-from hashlib import sha256
-import json
 
-ServiceType = Enum(
-    'ServiceType',
-    ses=(0, _(u'Amazon SES')),
-    smtp=(1, _(u'SMTP Server')),
-)
+class FileField(models.FileField):
+    def get_internal_type(self):
+        return 'FileField'
 
-CREDENTIAL = lambda length: dict(
-    max_length=length, null=True, blank=True, default=None, )
-
-TIME = lambda: dict(
-    null=True, blank=True, default=None, )
-
-NULLABLE = TIME
+    def generate_filename(self, instance, filename):
+        return os.path.join(
+            u"{0}/{1}/{2}/{3}".format(
+                instance._meta.db_table,
+                str(instance.id),
+                self.name,
+                filename))
 
 
 class BaseModel(models.Model):
@@ -34,139 +31,233 @@ class BaseModel(models.Model):
 
 
 class Service(BaseModel):
-    service_type = models.IntegerField(
-        _(u'Service Type'), choices=ServiceType.choices,)
-    user = models.CharField(_("Service User"), **CREDENTIAL(50))
-    key = models.CharField(_("Service Key"),  **CREDENTIAL(100))
-    secret = models.CharField(_("Service Secret"),  **CREDENTIAL(100))
-    region = models.CharField(_("Service Region"),  **CREDENTIAL(50))
-    notify_uri = models.CharField(_("Notify URI"),  **CREDENTIAL(200))
-    public_key = models.TextField(_(u'Public Key'), **NULLABLE())
+    name = models.CharField(
+        _('Mail Service Name'), unique=True, max_length=50)
+    class_name = models.CharField(
+        _('Mail Service Class Name'), max_length=20)
 
-    def __unicode__(self):
-        return "%s" % (
-            ServiceType(self.service_type).name
-        )
-
-    def __init__(self, *args, **kwargs):
-        super(Service, self).__init__(*args, **kwargs)
-        self._service = None
+    class Meta:
+        verbose_name = _('Mail Service')
+        verbose_name_plural = _('Mail Service')
 
     @property
-    def service(self):
-        if self._service is None and self.service_type is not None:
-            name = ServiceType(self.service_type).name
-            mod = import_module('emailqueue.services.%s' % name)
-            self._service = getattr(mod, 'Api')(self)
-        return self._service
+    def instance(self):
+        return getattr(self, self.class_name)
 
     def send(self, email):
-        return self.service.send(email)
+        raise NotImplemented
 
 
-class Notification(BaseModel):
-    service = models.ForeignKey(Service, **NULLABLE())
-    message = models.TextField(_(u'Notification Message'))
+class Postbox(BaseModel):
+    owner = models.ForeignKey(
+        User,
+        verbose_name=_('Postbox Owner'), help_text=_('Postbox Owner Help'),
+        null=True, blank=True, default=None)
 
-    def __init__(self, *args, **kwargs):
-        super(Notification, self).__init__(*args, **kwargs)
-        self._json_message = None
+    address = models.EmailField(
+        _('Postbox Address'), help_text=_('Postbox Address Help'),
+        max_length=50)
 
-    def verify(self):
-        if self.service:
-            return self.service.service.verify_notification(self)
-        return False
+    forward = models.EmailField(
+        _('Forwoard Address'), help_text=_('Forwoard Address Help'),
+        max_length=50, null=True, blank=True, default=None)
 
-    def process(self):
-        self.service and self.service.service.process_notification(self)
+    task = models.TextField(
+        _('Postbox Task'), help_text=_('Postbox Task Help'),
+        null=True, blank=True, default=None)
 
-    @property
-    def json_message(self):
-        if not self._json_message:
-            try:
-                self._json_message = json.loads(self.message)
-            except:
-                pass
-        return self._json_message
+    blacklist = models.TextField(
+        _('Black List Pattern'),
+        help_text=_('Black List Pattern Help'),
+        null=True, blank=True, default=None)
+
+    class Meta:
+        verbose_name = _('Postbox')
+        verbose_name_plural = _('Postbox')
 
 
-class BounceAddress(BaseModel):
-    service = models.ForeignKey(Service)
-    address = models.EmailField(db_index=True)
-    count = models.IntegerField(default=0)
+class Relay(BaseModel):
+    postbox = models.ForeignKey(
+        Postbox,
+        verbose_name=_('Postbox'), help_text=_('Postbox Help'))
+
+    sender = models.EmailField(
+        _('Sender Address'), help_text=_('Sender Address Help'), max_length=50)
+
+    is_spammer = models.BooleanField(
+        _('Is Spammer'), default=False)
+
+    class Meta:
+        verbose_name = _('Relay')
+        verbose_name_plural = _('Relay')
+
+
+class Contact(BaseModel):
+    email = models.EmailField(
+        _('Email Address'), help_text=_('Email Address Help'), max_length=50)
+
+    class Meta:
+        verbose_name = _('Contact')
+        verbose_name_plural = _('Contact')
 
     def __unicode__(self):
-        return self.address or ''
+        return self.email
 
 
-class BounceLog(BaseModel):
-    address = models.ForeignKey(BounceAddress)
-    message = models.TextField()
+class Mail(BaseModel):
+    sender = models.ForeignKey(
+        Postbox,
+        verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
+
+    subject = models.TextField(
+        _('Mail Subject'), help_text=_('Mail Subject Help'), )
+
+    body = models.TextField(
+        _('Mail Body'), help_text=_('Mail Body Help'), )
+
+    content_type = models.ForeignKey(
+        ContentType, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    ctx = generic.GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        verbose_name = _('Mail')
+        verbose_name_plural = _('Mail')
+
+    def __unicode__(self):
+        return self.subject
 
 
-class Email(BaseModel):
-    service = models.ForeignKey(Service)
-    address_from = models.CharField(_(u'From Address'), max_length=50)
-    address_to = models.CharField(_(u'To Address'), max_length=50)
-    address_return_path = models.CharField(
-        _(u'Return Path Address'), max_length=50)
-    message_id_hash = models.CharField(_(u'Message ID Hash'), max_length=100)
-    message = models.TextField(_(u'Raw Message'))
+class Recipient(BaseModel):
+    mail = models.ForeignKey(
+        Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
+    to = models.ForeignKey(
+        Contact, verbose_name=_('Recipient Address'),
+        help_text=_('Recipient Address Help'))
 
-    schedule = models.DateTimeField(_(u'Schedule'), **TIME())
-    sent_at = models.DateTimeField(_(u'Sent At'),  **TIME())
+    class Meta:
+        verbose_name = _('Recipient')
+        verbose_name_plural = _('Recipient')
 
-    def send(self):
-        self.service.send(self)
 
-    @classmethod
-    def create_email(
-        cls, service, addr_from, addr_to,
-        subject, message,
-        message_id=None, return_address=None,
-        subtype="plain", encoding="utf-8",
-        schedule=None
-    ):
+class Attachment(BaseModel):
+    mail = models.ForeignKey(
+        Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
 
-        if isinstance(service, int):
-            service = Service.objects.get(id=service)
+    file = FileField(
+        _('Attachment File'),
+        help_text=_('Attrachment File Help'),)
 
-        message_id = message_id or uuid.uuid1().hex
-        message_id_hash = sha256(message_id).hexdigest()
+    class Meta:
+        verbose_name = _('Attachment')
+        verbose_name_plural = _('Attachment')
 
-        if encoding == 'utf-8':
-            pass
-        elif encoding == "shift_jis":
-            #: DoCoMo
-            #: TODO chekck message encoding and convert it
-            Charset.add_charset(
-                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
-            Charset.add_codec('shift_jis', 'cp932')
 
-        message = MIMEText(message, subtype, encoding)
-        message['Subject'] = subject
-        message['From'] = addr_from
-        message['To'] = addr_to
-        message['Message-ID'] = message_id
+class Outbound(BaseModel):
+    service = models.ForeignKey(
+        Service, verbose_name=_('Service'), help_text=_('Service Help'))
 
-        user, domain = addr_from.split('@')
-        if return_address:
-            return_address = return_address.replace8('@', '=')
-        else:
-            return_address = message_id_hash
+    mail = models.ForeignKey(
+        Mail, verbose_name=_('Mail'), help_text=_('Mail Help'),
+        null=True, blank=True, default=None)
 
-        return_path = "%s+%s@%s" % (
-            user, return_address, domain,
-        )
+    return_path = models.EmailField(
+        _('Return Path'), help_text=_('Return Path Help'),
+        max_length=50)
 
-        email = cls(
-            service=service,
-            address_from=addr_from,
-            address_to=addr_to,
-            address_return_path=return_path,
-            message_id_hash=message_id_hash,
-            message=message.as_string(),
-            schedule=schedule,
-        )
-        email.save()
-        return email
+    recipient = models.ForeignKey(
+        Contact, verbose_name=_('Recipient'), help_text=_('Recipient Help'))
+
+    raw_message = models.TextField(
+        _('Serialized Message'), help_text=_('Serialized Message Help'),
+        null=True, blank=True, default=None)
+
+    due_at = models.DateTimeField(
+        _('Due At'), null=True, blank=True, default=None)
+    sent_at = models.DateTimeField(
+        _('Sent At'), null=True, blank=True, default=None)
+
+    class Meta:
+        verbose_name = _('Outbound')
+        verbose_name_plural = _('Outbound')
+
+# class BounceAddress(BaseModel):
+#     service = models.ForeignKey(Service)
+#     address = models.EmailField(db_index=True)
+#     count = models.IntegerField(default=0)
+#
+#     def __unicode__(self):
+#         return self.address or ''
+#
+#
+# class BounceLog(BaseModel):
+#     address = models.ForeignKey(BounceAddress)
+#     message = models.TextField()
+#
+#
+# class Email(BaseModel):
+#     service = models.ForeignKey(Service)
+#     address_from = models.CharField(_(u'From Address'), max_length=50)
+#     address_to = models.CharField(_(u'To Address'), max_length=50)
+#     address_return_path = models.CharField(
+#         _(u'Return Path Address'), max_length=50)
+#     message_id_hash = models.CharField(_(u'Message ID Hash'), max_length=100)
+#     message = models.TextField(_(u'Raw Message'))
+#
+#     schedule = models.DateTimeField(_(u'Schedule'), **TIME())
+#     sent_at = models.DateTimeField(_(u'Sent At'),  **TIME())
+#
+#     def send(self):
+#         self.service.send(self)
+#
+#     @classmethod
+#     def create_email(
+#         cls, service, addr_from, addr_to,
+#         subject, message,
+#         message_id=None, return_address=None,
+#         subtype="plain", encoding="utf-8",
+#         schedule=None
+#     ):
+#
+#         if isinstance(service, int):
+#             service = Service.objects.get(id=service)
+#
+#         message_id = message_id or uuid.uuid1().hex
+#         message_id_hash = sha256(message_id).hexdigest()
+#
+#         if encoding == 'utf-8':
+#             pass
+#         elif encoding == "shift_jis":
+#             #: DoCoMo
+#             #: TODO chekck message encoding and convert it
+#             Charset.add_charset(
+#                 'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
+#             Charset.add_codec('shift_jis', 'cp932')
+#
+#         message = MIMEText(message, subtype, encoding)
+#         message['Subject'] = subject
+#         message['From'] = addr_from
+#         message['To'] = addr_to
+#         message['Message-ID'] = message_id
+#
+#         user, domain = addr_from.split('@')
+#         if return_address:
+#             return_address = return_address.replace8('@', '=')
+#         else:
+#             return_address = message_id_hash
+#
+#         return_path = "%s+%s@%s" % (
+#             user, return_address, domain,
+#         )
+#
+#         email = cls(
+#             service=service,
+#             address_from=addr_from,
+#             address_to=addr_to,
+#             address_return_path=return_path,
+#             message_id_hash=message_id_hash,
+#             message=message.as_string(),
+#             schedule=schedule,
+#         )
+#         email.save()
+#         return email
