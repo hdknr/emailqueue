@@ -3,7 +3,7 @@ MySQL-python
 enum34
 south
 Celery
-django-celery
 boto
 django-tastypie
 pycrypto
+requests

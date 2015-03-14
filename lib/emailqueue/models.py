@@ -40,6 +40,9 @@ class Service(BaseModel):
         verbose_name = _('Mail Service')
         verbose_name_plural = _('Mail Service')
 
+    def __unicode__(self):
+        return self.name
+
     @property
     def instance(self):
         return getattr(self, self.class_name)
@@ -180,6 +183,9 @@ class Outbound(BaseModel):
     class Meta:
         verbose_name = _('Outbound')
         verbose_name_plural = _('Outbound')
+
+    def send(self):
+        self.service.instance.send(self)
 
 # class BounceAddress(BaseModel):
 #     service = models.ForeignKey(Service)

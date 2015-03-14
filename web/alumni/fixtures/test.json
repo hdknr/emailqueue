@@ -1,0 +1,663 @@
+[
+{
+    "fields": {
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "is_active": true,
+        "is_superuser": true,
+        "is_staff": true,
+        "last_login": "2015-03-13T23:59:02.047Z",
+        "groups": [],
+        "user_permissions": [],
+        "password": "pbkdf2_sha256$15000$7tudxqniHOvD$zTaBmUUbtJk6OPxFIv0inJ4aNm3FWcIduHn9boR0JPw=",
+        "email": "admin@admin.admin",
+        "date_joined": "2015-03-13T23:58:37.730Z"
+    },
+    "model": "auth.user",
+    "pk": 1
+},
+{
+    "fields": {
+        "expire_date": "2015-03-27T23:58:58.748Z",
+        "session_data": "OTUzZGQ4ZTJjNTI4NmRlYTI1YmUxYjBjMjZhZjVlZTEyODQwZTEyZDp7fQ=="
+    },
+    "model": "sessions.session",
+    "pk": "d0ngoicqw9083ugxzjoloio9kqil5hvg"
+},
+{
+    "fields": {
+        "expire_date": "2015-03-27T23:59:02.051Z",
+        "session_data": "ZDgzYWY4NjdhNmM2MTdlZTdiY2FjYTUxOTNhYTU0Njc3ZTgxMjE1ZTp7Il9hdXRoX3VzZXJfaGFzaCI6IjNiMDlhOWIxNzRmY2JlZDBjYjcwNWYwN2ZhNmY1MGJlNTgzYzY3MGMiLCJfYXV0aF91c2VyX2JhY2tlbmQiOiJkamFuZ28uY29udHJpYi5hdXRoLmJhY2tlbmRzLk1vZGVsQmFja2VuZCIsIl9hdXRoX3VzZXJfaWQiOjF9"
+    },
+    "model": "sessions.session",
+    "pk": "ol1mm5es5abwkvojxsgpfwe4zhnp3jn4"
+},
+{
+    "fields": {
+        "class_name": "ses",
+        "created_at": "2015-03-13T23:59:42.999Z",
+        "updated_at": "2015-03-14T00:23:21.082Z",
+        "name": "TactSes"
+    },
+    "model": "emailqueue.service",
+    "pk": 1
+},
+{
+    "fields": {
+        "class_name": "smtpserver",
+        "created_at": "2015-03-14T00:00:11.839Z",
+        "updated_at": "2015-03-14T00:32:54.800Z",
+        "name": "LocalPostfix"
+    },
+    "model": "emailqueue.service",
+    "pk": 2
+},
+{
+    "fields": {
+        "class_name": "smtpserver",
+        "created_at": "2015-03-14T00:05:29.353Z",
+        "updated_at": "2015-03-14T00:23:39.800Z",
+        "name": "xxxxx"
+    },
+    "model": "emailqueue.service",
+    "pk": 3
+},
+{
+    "fields": {
+        "task": "",
+        "created_at": "2015-03-14T06:10:13.720Z",
+        "updated_at": "2015-03-14T06:10:13.720Z",
+        "blacklist": "",
+        "forward": "admin@hoge.com",
+        "address": "admin@admin.com",
+        "owner": [
+            "admin"
+        ]
+    },
+    "model": "emailqueue.postbox",
+    "pk": 1
+},
+{
+    "fields": {
+        "created_at": "2015-03-14T05:57:52.440Z",
+        "updated_at": "2015-03-14T05:57:52.440Z",
+        "email": "user1@hoge.com"
+    },
+    "model": "emailqueue.contact",
+    "pk": 1
+},
+{
+    "fields": {
+        "created_at": "2015-03-14T05:58:08.633Z",
+        "updated_at": "2015-03-14T05:58:08.633Z",
+        "email": "user2@hoge.com"
+    },
+    "model": "emailqueue.contact",
+    "pk": 2
+},
+{
+    "fields": {
+        "created_at": "2015-03-14T06:04:09.188Z",
+        "updated_at": "2015-03-14T06:04:09.188Z",
+        "email": "user3@hoge.com"
+    },
+    "model": "emailqueue.contact",
+    "pk": 3
+},
+{
+    "fields": {
+        "created_at": "2015-03-14T06:04:37.535Z",
+        "updated_at": "2015-03-14T06:04:37.535Z",
+        "email": "user4@hoge.com"
+    },
+    "model": "emailqueue.contact",
+    "pk": 4
+},
+{
+    "fields": {
+        "body": "\u4eca\u65e5\u306f",
+        "sender": 1,
+        "created_at": "2015-03-14T06:10:47.523Z",
+        "updated_at": "2015-03-14T06:10:47.523Z",
+        "object_id": null,
+        "content_type": null,
+        "subject": "\u3053\u3093\u306b\u3061\u306f"
+    },
+    "model": "emailqueue.mail",
+    "pk": 1
+},
+{
+    "fields": {
+        "mail": 1,
+        "created_at": "2015-03-14T06:13:57.066Z",
+        "updated_at": "2015-03-14T06:13:57.066Z",
+        "to": 3
+    },
+    "model": "emailqueue.recipient",
+    "pk": 1
+},
+{
+    "fields": {
+        "sent_at": null,
+        "service": 2,
+        "due_at": null,
+        "created_at": "2015-03-14T06:22:54.974Z",
+        "updated_at": "2015-03-14T06:22:54.974Z",
+        "return_path": "mail-1-1@hoge.com",
+        "raw_message": "",
+        "mail": 1,
+        "recipient": 1
+    },
+    "model": "emailqueue.outbound",
+    "pk": 1
+},
+{
+    "fields": {},
+    "model": "emailsmtp.smtpserver",
+    "pk": 2
+},
+{
+    "fields": {},
+    "model": "emailsmtp.smtpserver",
+    "pk": 3
+},
+{
+    "fields": {},
+    "model": "emailses.ses",
+    "pk": 1
+},
+{
+    "fields": {
+        "family_name": "family1",
+        "first_name": "name1"
+    },
+    "model": "alumni.profile",
+    "pk": 1
+},
+{
+    "fields": {
+        "family_name": "famly2",
+        "first_name": "name2"
+    },
+    "model": "alumni.profile",
+    "pk": 2
+},
+{
+    "fields": {
+        "family_name": "family3",
+        "first_name": "user3"
+    },
+    "model": "alumni.profile",
+    "pk": 3
+},
+{
+    "fields": {
+        "family_name": "family4",
+        "first_name": "name4"
+    },
+    "model": "alumni.profile",
+    "pk": 4
+},
+{
+    "fields": {
+        "graduated_school": "Schoo2",
+        "graduated_year": 2004,
+        "entered_school": "School1",
+        "entered_year": 2000
+    },
+    "model": "alumni.alumnus",
+    "pk": 3
+},
+{
+    "fields": {
+        "graduated_school": "School5",
+        "graduated_year": 2005,
+        "entered_school": "School3",
+        "entered_year": 2001
+    },
+    "model": "alumni.alumnus",
+    "pk": 4
+},
+{
+    "fields": {},
+    "model": "alumni.letter",
+    "pk": 1
+},
+{
+    "fields": {
+        "name": "Tennis"
+    },
+    "model": "circles.circle",
+    "pk": 1
+},
+{
+    "fields": {
+        "name": "Football"
+    },
+    "model": "circles.circle",
+    "pk": 2
+},
+{
+    "fields": {
+        "circle": 1,
+        "alumnus": 3
+    },
+    "model": "circles.circlemember",
+    "pk": 1
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-13T23:59:43.002Z",
+        "object_repr": "Ses object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailses",
+            "ses"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 1
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T00:00:11.840Z",
+        "object_repr": "SmtpServer object",
+        "object_id": "2",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailsmtp",
+            "smtpserver"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 2
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T00:05:29.356Z",
+        "object_repr": "SmtpServer object",
+        "object_id": "3",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailsmtp",
+            "smtpserver"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 3
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:09:26.773Z",
+        "object_repr": "Service object",
+        "object_id": "2",
+        "change_message": "class_name \u3092\u5909\u66f4\u3057\u307e\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 4
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:09:50.033Z",
+        "object_repr": "Service object",
+        "object_id": "3",
+        "change_message": "class_name \u3092\u5909\u66f4\u3057\u307e\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 5
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:14:36.606Z",
+        "object_repr": "SmtpServer object",
+        "object_id": "2",
+        "change_message": "class_name \u3092\u5909\u66f4\u3057\u307e\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailsmtp",
+            "smtpserver"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 6
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:14:51.203Z",
+        "object_repr": "Service object",
+        "object_id": "1",
+        "change_message": "class_name \u3092\u5909\u66f4\u3057\u307e\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 7
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:15:11.740Z",
+        "object_repr": "Ses object",
+        "object_id": "1",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailses",
+            "ses"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 8
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:21:49.625Z",
+        "object_repr": "Service object",
+        "object_id": "1",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 9
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:22:16.432Z",
+        "object_repr": "Service object",
+        "object_id": "2",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 10
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:23:21.083Z",
+        "object_repr": "Service object",
+        "object_id": "1",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "service"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 11
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:23:39.802Z",
+        "object_repr": "SmtpServer object",
+        "object_id": "3",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailsmtp",
+            "smtpserver"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 12
+},
+{
+    "fields": {
+        "action_flag": 2,
+        "action_time": "2015-03-14T00:32:54.803Z",
+        "object_repr": "SmtpServer object",
+        "object_id": "2",
+        "change_message": "\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailsmtp",
+            "smtpserver"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 13
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T05:57:52.441Z",
+        "object_repr": "Profile object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "alumni",
+            "profile"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 14
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T05:58:08.636Z",
+        "object_repr": "Profile object",
+        "object_id": "2",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "alumni",
+            "profile"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 15
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:04:09.192Z",
+        "object_repr": "user3@hoge.com",
+        "object_id": "3",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "alumni",
+            "alumnus"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 16
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:04:37.540Z",
+        "object_repr": "user4@hoge.com",
+        "object_id": "4",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "alumni",
+            "alumnus"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 17
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:05:53.166Z",
+        "object_repr": "Circle object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "circles",
+            "circle"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 18
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:05:57.769Z",
+        "object_repr": "Circle object",
+        "object_id": "2",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "circles",
+            "circle"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 19
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:07:46.833Z",
+        "object_repr": "user3@hoge.com",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "circles",
+            "circlemember"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 20
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:10:13.720Z",
+        "object_repr": "Postbox object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "postbox"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 21
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:10:47.524Z",
+        "object_repr": "Letter object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "alumni",
+            "letter"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 22
+},
+{
+    "fields": {
+        "action_flag": 1,
+        "action_time": "2015-03-14T06:22:54.975Z",
+        "object_repr": "Outbound object",
+        "object_id": "1",
+        "change_message": "",
+        "user": [
+            "admin"
+        ],
+        "content_type": [
+            "emailqueue",
+            "outbound"
+        ]
+    },
+    "model": "admin.logentry",
+    "pk": 23
+}
+]
