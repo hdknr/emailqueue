@@ -88,7 +88,8 @@ INSTALLED_APPS += (
     'emailsmtp',
     'emailses',
     'gunicorn',     # python manage.py run_gunicorn
-    'south',
+    'alumni',
+    'circles',
 )
 
 MIDDLEWARE_CLASSES += (

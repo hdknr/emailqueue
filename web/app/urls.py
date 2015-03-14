@@ -3,8 +3,6 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
 
-from emailqueue.services.ses import SnsResource
-
 urlpatterns = patterns(
     '',
     # Examples:
@@ -12,5 +10,4 @@ urlpatterns = patterns(
     # url(r'^blog/', include('blog.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^aws/ses/', include(SnsResource().urls)), 
 )
