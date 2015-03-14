@@ -61,3 +61,62 @@ This will build a HTML version of the documentation. You can read the
 documentation by opening the following file in any web browser::
 
     docs/_build/html/index.html
+
+RabbitMQ
+=============
+
+Debian
+---------
+
+::
+
+    $ sudo apt-get install rabbitmq-server
+
+Configure
+------------
+
+Virtual Host ::
+
+    $ sudo rabbitmqctl add_vhost emailqueue
+
+    Creating vhost "emailqueue" ...
+    ...done.
+
+    $ sudo rabbitmqctl list_vhosts
+
+    Listing vhosts ...
+    /
+    emailqueue
+    ...done.
+
+User::
+
+    $ sudo rabbitmqctl add_user emailqueue emailqueue
+
+    Creating user "emailqueue" ...
+    ...done.
+
+
+    $ sudo rabbitmqctl list_users
+    Listing users ...
+    
+    emailqueue      []
+    guest   [administrator]
+    ...done.
+
+
+Permission::
+
+    $ sudo rabbitmqctl set_permissions -p emailqueue emailqueue ".*" ".*" ".*"
+
+    Setting permissions for user "emailqueue" in vhost "emailqueue" ...
+    ...done.
+
+    $ sudo rabbitmqctl -p emailqueue list_permissions
+
+    Listing permissions in vhost "emailqueue" ...
+    emailqueue      .*      .*      .*
+    ...done.
+
+
+
