@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.mail import get_connection
+from django.utils.timezone import now
 
 from celery import current_task
 from celery.utils.log import get_task_logger
@@ -54,3 +55,8 @@ def save_inbound(sender, recipient, raw_message):
         raw_message=raw_message)
     inbound.save()
     return inbound.id
+
+
+@task
+def process_inbound(id):
+    models.Inbound.objects.filter(id=id).update(processed_at=now())

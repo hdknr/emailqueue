@@ -65,12 +65,27 @@ documentation by opening the following file in any web browser::
 RabbitMQ
 =============
 
+- http://celery.readthedocs.org/en/latest/getting-started/brokers/rabbitmq.html
+
 Debian
 ---------
 
 ::
 
     $ sudo apt-get install rabbitmq-server
+
+::
+
+    $ sudo service --status-all | grep rabbit
+    
+    [ + ]  rabbitmq-server
+
+::
+
+    $ sudo lsof -i:5672
+
+    COMMAND  PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+    beam    8220 rabbitmq   15u  IPv6  27411      0t0  TCP *:amqp (LISTEN)
 
 Configure
 ------------
@@ -120,3 +135,45 @@ Permission::
 
 
 
+Web
+----
+
+- https://www.rabbitmq.com/management.html
+
+::
+
+    $ sudo rabbitmq-plugins enable rabbitmq_management
+
+    The following plugins have been enabled:
+      mochiweb
+      webmachine
+      rabbitmq_web_dispatch
+      amqp_client
+      rabbitmq_management_agent
+      rabbitmq_management
+    Plugin configuration has changed. Restart RabbitMQ for changes to take effect.
+
+::
+
+    $ sudo service rabbitmq-server restart
+
+::
+
+    $ sudo lsof -i:15672
+
+    COMMAND   PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+    beam    11924 rabbitmq   18u  IPv4  35860      0t0  TCP *:15672 (LISTEN)
+
+::
+
+    $ zcat /usr/share/doc/rabbitmq-server/rabbitmq.config.example.gz  | sudo tee -a /etc/rabbitmq/rabbitmq.config
+
+::
+
+    $ sudo vim /etc/rabbitmq/rabbitmq.config
+
+- allow guest from  other computers ( DO NOT keep the comma after the last element in a array )
+
+::
+
+    {loopback_users, []}         %%, 

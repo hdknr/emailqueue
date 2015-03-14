@@ -39,6 +39,9 @@ class Inbound(BaseModel):
         _(u'Raw Message Text'), help_text=_(u'Raw Message Text Help'),
         default=None, blank=True, null=True)
 
+    processed_at = models.DateTimeField(
+        _('Processed At'), null=True, blank=True, default=None)
+
     class Meta:
         verbose_name = _(u'Inbound')
         verbose_name_plural = _(u'Inbound')
