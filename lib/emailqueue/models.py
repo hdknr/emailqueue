@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 
@@ -60,6 +59,9 @@ class Postbox(BaseModel):
         _('Forwoard Address'), help_text=_('Forwoard Address Help'),
         max_length=50, null=True, blank=True, default=None)
 
+    deleted = models.BooleanField(
+        _('Is Deleted'), help_text=_('Is Deleted Help'), default=False, )
+
     task = models.TextField(
         _('Postbox Task'), help_text=_('Postbox Task Help'),
         null=True, blank=True, default=None)
@@ -72,6 +74,11 @@ class Postbox(BaseModel):
     class Meta:
         verbose_name = _('Postbox')
         verbose_name_plural = _('Postbox')
+
+    def __unicode__(self):
+        return u"{0} >> {1}".format(
+            self.address, self.forward,
+        )
 
 
 class Relay(BaseModel):
