@@ -95,13 +95,14 @@ class Relay(BaseModel):
         verbose_name_plural = _('Relay')
 
 
-class Contact(BaseModel):
+class MailAddress(BaseModel):
     email = models.EmailField(
-        _('Email Address'), help_text=_('Email Address Help'), max_length=50)
+        _('Email Address'),
+        help_text=_('Email Address Help'), max_length=50)
 
     class Meta:
-        verbose_name = _('Contact')
-        verbose_name_plural = _('Contact')
+        verbose_name = _('Mail Address')
+        verbose_name_plural = _('Mail Address')
 
     def __unicode__(self):
         return self.email
@@ -135,7 +136,7 @@ class Recipient(BaseModel):
     mail = models.ForeignKey(
         Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
     to = models.ForeignKey(
-        Contact, verbose_name=_('Recipient Address'),
+        MailAddress, verbose_name=_('Recipient Address'),
         help_text=_('Recipient Address Help'))
 
     class Meta:
@@ -169,7 +170,7 @@ class Outbound(BaseModel):
         max_length=50)
 
     recipient = models.ForeignKey(
-        Contact, verbose_name=_('Recipient'), help_text=_('Recipient Help'))
+        MailAddress, verbose_name=_('Recipient'), help_text=_('Recipient Help'))
 
     raw_message = models.TextField(
         _('Serialized Message'), help_text=_('Serialized Message Help'),
