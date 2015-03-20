@@ -92,6 +92,16 @@ INSTALLED_APPS += (
     'circles',
 )
 
+DATABASES['default'] = {
+    'ENGINE': 'django.db.backends.mysql',
+    'HOST': 'localhost',
+    'NAME': 'emailqueue',
+    'USER': 'emailqueue',
+    'PASSWORD': 'emailqueue',
+    'TEST_CHARSET': 'utf8',
+    'TEST_DATABASE_COLLATION': 'utf8_general_ci',
+}
+
 MIDDLEWARE_CLASSES += (
     'app.middleware.SettingsMiddleware',
 )

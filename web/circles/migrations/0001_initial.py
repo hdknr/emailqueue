@@ -7,8 +7,8 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('alumni', '0001_initial'),
-        ('emailqueue', '0004_attachment_file'),
+        ('emailqueue', '0007_auto_20150319_0127'),
+        ('alumni', '0003_alumnus_letter'),
     ]
 
     operations = [
