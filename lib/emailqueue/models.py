@@ -52,11 +52,6 @@ class Service(BaseModel):
 
 
 class Postbox(BaseModel):
-    owner = models.ForeignKey(
-        User,
-        verbose_name=_('Postbox Owner'), help_text=_('Postbox Owner Help'),
-        null=True, blank=True, default=None)
-
     address = models.EmailField(
         _('Postbox Address'), help_text=_('Postbox Address Help'),
         max_length=50)
