@@ -1,3 +1,5 @@
+''' Email Delivery Subsystem
+'''
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
@@ -22,6 +24,8 @@ class FileField(models.FileField):
 
 
 class BaseModel(models.Model):
+    '''Base Model
+    '''
     created_at = models.DateTimeField(_(u'Created At'), auto_now_add=True, )
     updated_at = models.DateTimeField(_(u'Updated At'), auto_now=True, )
 
@@ -30,6 +34,8 @@ class BaseModel(models.Model):
 
 
 class Service(BaseModel):
+    ''' Mail Sending Service
+    '''
     name = models.CharField(
         _('Mail Service Name'), unique=True, max_length=50)
     class_name = models.CharField(
@@ -51,6 +57,8 @@ class Service(BaseModel):
 
 
 class Postbox(BaseModel):
+    ''' Mail Relay Definition
+    '''
     address = models.EmailField(
         _('Postbox Address'), help_text=_('Postbox Address Help'),
         max_length=50)
@@ -82,6 +90,8 @@ class Postbox(BaseModel):
 
 
 class Relay(BaseModel):
+    ''' Relay Entries for Postbox
+    '''
     postbox = models.ForeignKey(
         Postbox,
         verbose_name=_('Postbox'), help_text=_('Postbox Help'))
@@ -98,6 +108,8 @@ class Relay(BaseModel):
 
 
 class MailAddress(BaseModel):
+    ''' Mail Address
+    '''
     email = models.EmailField(
         _('Email Address'),
         help_text=_('Email Address Help'), max_length=50)
@@ -111,6 +123,8 @@ class MailAddress(BaseModel):
 
 
 class Mail(BaseModel):
+    '''Mail Delivery Definition
+    '''
     sender = models.ForeignKey(
         Postbox,
         verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
@@ -135,6 +149,8 @@ class Mail(BaseModel):
 
 
 class Recipient(BaseModel):
+    '''Recipients for a Mail
+    '''
     mail = models.ForeignKey(
         Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
     to = models.ForeignKey(
@@ -147,6 +163,8 @@ class Recipient(BaseModel):
 
 
 class Attachment(BaseModel):
+    '''Attachemetns for a Mail
+    '''
     mail = models.ForeignKey(
         Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
 
@@ -160,6 +178,8 @@ class Attachment(BaseModel):
 
 
 class Outbound(BaseModel):
+    '''Outbound Queue
+    '''
     service = models.ForeignKey(
         Service, verbose_name=_('Service'), help_text=_('Service Help'))
 
