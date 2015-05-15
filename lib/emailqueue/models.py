@@ -140,6 +140,13 @@ class Mail(BaseModel):
     object_id = models.PositiveIntegerField(null=True, blank=True)
     ctx = generic.GenericForeignKey('content_type', 'object_id')
 
+    enabled = models.BooleanField(
+        _('Enabled'), help_text=_('Enabled'), default=False)
+
+    due_at = models.DateTimeField(
+        _('Due At'), help_text=_('Due At'),
+        null=True, blank=True, default=None)
+
     class Meta:
         verbose_name = _('Mail')
         verbose_name_plural = _('Mail')
@@ -156,6 +163,12 @@ class Recipient(BaseModel):
     to = models.ForeignKey(
         MailAddress, verbose_name=_('Recipient Address'),
         help_text=_('Recipient Address Help'))
+
+    return_path = models.EmailField(
+        _('Return Path'), help_text=_('Return Path Help'), max_length=50,
+        null=True, default=None, blank=True)
+    sent_at = models.DateTimeField(
+        _('Sent At'), null=True, blank=True, default=None)
 
     class Meta:
         verbose_name = _('Recipient')
