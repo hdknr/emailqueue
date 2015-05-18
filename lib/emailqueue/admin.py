@@ -1,13 +1,13 @@
 from django.contrib import admin
-from django.db.models import get_app, get_models
-# import models
+from django.apps import apps
 
 
 class ServiceAdmin(admin.ModelAdmin):
     readonly_fields = ('name', 'class_name', )
 
 
-for model in get_models(get_app(__name__.split('.')[-2:][0])):
+for name, model in apps.get_app_config(
+        __name__.split('.')[-2:][0]).models.items():
 
     name = "%sAdmin" % model.__name__
 

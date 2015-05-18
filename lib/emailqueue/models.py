@@ -3,7 +3,9 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models import Q
+
 
 import os
 # from email.mime.text import MIMEText
@@ -122,12 +124,24 @@ class MailAddress(BaseModel):
         return self.email
 
 
+class MailQuerySet(models.QuerySet):
+    def active_set(self, basetime=None):
+        return self.filter(
+            Q(due_at__isnull=True) | Q(due_at__lte=basetime),
+            enabled=True,
+        )
+
+
 class Mail(BaseModel):
     '''Mail Delivery Definition
     '''
     sender = models.ForeignKey(
         Postbox,
         verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
+
+    name = models.CharField(
+        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
+        null=True, default=None, blank=True)
 
     subject = models.TextField(
         _('Mail Subject'), help_text=_('Mail Subject Help'), )
@@ -138,7 +152,7 @@ class Mail(BaseModel):
     content_type = models.ForeignKey(
         ContentType, null=True, blank=True)
     object_id = models.PositiveIntegerField(null=True, blank=True)
-    ctx = generic.GenericForeignKey('content_type', 'object_id')
+    ctx = GenericForeignKey('content_type', 'object_id')
 
     enabled = models.BooleanField(
         _('Enabled'), help_text=_('Enabled'), default=False)
@@ -150,6 +164,8 @@ class Mail(BaseModel):
     class Meta:
         verbose_name = _('Mail')
         verbose_name_plural = _('Mail')
+
+    objects = MailQuerySet.as_manager()
 
     def __unicode__(self):
         return self.subject
