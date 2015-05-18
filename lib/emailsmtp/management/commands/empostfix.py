@@ -69,3 +69,13 @@ class Command(Command):
             except:
                 for err in traceback.format_exc().split('\n'):
                     log.error("bouncer.handle_main:%s" % err)
+
+    class SendMessage(SubCommand):
+        name = "send_messages"
+        description = "bounce by incoming mail"
+        args = [
+        ]
+
+        def run(self, params, **options):
+            from emailsmtp.tasks import send_messages
+            send_messages()

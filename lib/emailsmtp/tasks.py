@@ -10,7 +10,7 @@ import traceback
 
 import models
 
-from emailqueue.models import Mail
+from emailqueue.models import Recipient
 
 
 logger = get_task_logger('emailsmtp')
@@ -19,9 +19,16 @@ BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
 
 
 @task
-def sendmessage():
-    for mail in Mail.objects.all():
-        pass
+def send_messages():
+    for recipient in Recipient.objects.active_set():
+        # TODO: insert SLEEPING ...
+        send_raw_message(
+            recipient.return_path,
+            [recipient.to.email],
+            recipient.create_message().as_string(),)
+
+        recipient.sent_at = now()
+        recipient.save()
 
 
 @task

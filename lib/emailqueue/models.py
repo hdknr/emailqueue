@@ -5,11 +5,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.timezone import now
+from django import template
 
-
+import uuid
 import os
-# from email.mime.text import MIMEText
-# from email import Charset
+# import hashlib
+from email.mime.text import MIMEText
+from email import Charset
 
 
 class FileField(models.FileField):
@@ -184,6 +186,11 @@ class Mail(BaseModel):
             ),)[0]
         return recipient
 
+    @property
+    def subtype(self):
+        # TODO: SHOULD BE configurable
+        return 'plain'
+
 
 class RecipientQuerySet(models.QuerySet):
     def active_set(self, basetime=None):
@@ -217,6 +224,36 @@ class Recipient(BaseModel):
 
     objects = RecipientQuerySet.as_manager()
 
+    def rendered_message(self):
+        return template.Template(self.mail.body).render(
+            template.Context(dict(
+                to=self.to,
+                ctx=self.mail.ctx,
+            )))
+
+    def create_message(self, encoding="utf-8",):
+        # TODO: encoding depends on to.email doain actually
+        message_id = uuid.uuid1().hex
+
+        if encoding == 'utf-8':
+            pass
+        elif encoding == "shift_jis":
+            #: DoCoMo
+            #: TODO chekck message encoding and convert it
+            Charset.add_charset(
+                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
+            Charset.add_codec('shift_jis', 'cp932')
+
+        message = MIMEText(
+            self.rendered_message(), self.mail.subtype, encoding)
+
+        message['Subject'] = self.mail.subject
+        message['From'] = self.mail.sender.address
+        message['To'] = self.to.email
+        message['Message-ID'] = message_id
+
+        return message
+
 
 class Attachment(BaseModel):
     '''Attachemetns for a Mail
@@ -231,118 +268,3 @@ class Attachment(BaseModel):
     class Meta:
         verbose_name = _('Attachment')
         verbose_name_plural = _('Attachment')
-
-
-class Outbound(BaseModel):
-    '''Outbound Queue
-    '''
-    service = models.ForeignKey(
-        Service, verbose_name=_('Service'), help_text=_('Service Help'))
-
-    mail = models.ForeignKey(
-        Mail, verbose_name=_('Mail'), help_text=_('Mail Help'),
-        null=True, blank=True, default=None)
-
-    return_path = models.EmailField(
-        _('Return Path'), help_text=_('Return Path Help'),
-        max_length=50)
-
-    recipient = models.ForeignKey(
-        MailAddress, verbose_name=_('Recipient'), help_text=_('Recipient Help'))
-
-    raw_message = models.TextField(
-        _('Serialized Message'), help_text=_('Serialized Message Help'),
-        null=True, blank=True, default=None)
-
-    due_at = models.DateTimeField(
-        _('Due At'), null=True, blank=True, default=None)
-    sent_at = models.DateTimeField(
-        _('Sent At'), null=True, blank=True, default=None)
-
-    class Meta:
-        verbose_name = _('Outbound')
-        verbose_name_plural = _('Outbound')
-
-    def send(self):
-        self.service.instance.send(self)
-
-# class BounceAddress(BaseModel):
-#     service = models.ForeignKey(Service)
-#     address = models.EmailField(db_index=True)
-#     count = models.IntegerField(default=0)
-#
-#     def __unicode__(self):
-#         return self.address or ''
-#
-#
-# class BounceLog(BaseModel):
-#     address = models.ForeignKey(BounceAddress)
-#     message = models.TextField()
-#
-#
-# class Email(BaseModel):
-#     service = models.ForeignKey(Service)
-#     address_from = models.CharField(_(u'From Address'), max_length=50)
-#     address_to = models.CharField(_(u'To Address'), max_length=50)
-#     address_return_path = models.CharField(
-#         _(u'Return Path Address'), max_length=50)
-#     message_id_hash = models.CharField(_(u'Message ID Hash'), max_length=100)
-#     message = models.TextField(_(u'Raw Message'))
-#
-#     schedule = models.DateTimeField(_(u'Schedule'), **TIME())
-#     sent_at = models.DateTimeField(_(u'Sent At'),  **TIME())
-#
-#     def send(self):
-#         self.service.send(self)
-#
-#     @classmethod
-#     def create_email(
-#         cls, service, addr_from, addr_to,
-#         subject, message,
-#         message_id=None, return_address=None,
-#         subtype="plain", encoding="utf-8",
-#         schedule=None
-#     ):
-#
-#         if isinstance(service, int):
-#             service = Service.objects.get(id=service)
-#
-#         message_id = message_id or uuid.uuid1().hex
-#         message_id_hash = sha256(message_id).hexdigest()
-#
-#         if encoding == 'utf-8':
-#             pass
-#         elif encoding == "shift_jis":
-#             #: DoCoMo
-#             #: TODO chekck message encoding and convert it
-#             Charset.add_charset(
-#                 'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
-#             Charset.add_codec('shift_jis', 'cp932')
-#
-#         message = MIMEText(message, subtype, encoding)
-#         message['Subject'] = subject
-#         message['From'] = addr_from
-#         message['To'] = addr_to
-#         message['Message-ID'] = message_id
-#
-#         user, domain = addr_from.split('@')
-#         if return_address:
-#             return_address = return_address.replace8('@', '=')
-#         else:
-#             return_address = message_id_hash
-#
-#         return_path = "%s+%s@%s" % (
-#             user, return_address, domain,
-#         )
-#
-#         email = cls(
-#             service=service,
-#             address_from=addr_from,
-#             address_to=addr_to,
-#             address_return_path=return_path,
-#             message_id_hash=message_id_hash,
-#             message=message.as_string(),
-#             schedule=schedule,
-#         )
-#         email.save()
-#         return email
