@@ -1,9 +1,12 @@
 from django.test import TestCase
-from django.core.urlresolvers import reverse
 from urllib import urlencode
 
+from models import Mail, Postbox, Recipient
+from django.utils.timezone import now
+from datetime import timedelta
 
-class NotificationTest(TestCase):
+
+class MailTest(TestCase):
     def post_json(
             self, url, jstr="{}", status_code=200, user=None,
             meta={}, query={}):
@@ -16,10 +19,85 @@ class NotificationTest(TestCase):
         self.assertEqual(response.status_code, status_code)
         return response
 
-    def test_simple(self):
-        from emailqueue.models import Service, ServiceType, Notification
-        service = Service(service_type=ServiceType.ses.value)
-        service.save()
-        url = service.service.notify_path()
-        self.post_json(url, status_code=201)
-        self.assertEqual(Notification.objects.count(), 1)
+    def _create_mail(self):
+        pb = Postbox.objects.get_or_create(
+            address='admin@test.oillio.net',
+            forward='oillionet@ict-tact.co.jp',
+        )[0]
+        mail = Mail.objects.create(
+            sender=pb,
+            subject='subject',
+            body='body',
+        )
+        return mail
+
+    def test_active_mail(self):
+        mail = self._create_mail()
+
+        # Default
+        dtnow = now()
+        self.assertIsNone(mail.due_at)
+        self.assertFalse(mail.enabled)
+        self.assertTrue(Mail.objects.filter(due_at__isnull=True).exists())
+        self.assertTrue(Mail.objects.filter(due_at__isnull=True).exists())
+        self.assertFalse(Mail.objects.filter(due_at__lte=dtnow).exists())
+        self.assertFalse(Mail.objects.active_set().exists())
+
+        # Set Enabled
+        mail.enabled = True
+        mail.save()
+        self.assertTrue(Mail.objects.filter(due_at__isnull=True).exists())
+        self.assertFalse(Mail.objects.filter(due_at__lte=dtnow).exists())
+        self.assertTrue(Mail.objects.active_set().exists())
+
+        # Set Time
+        dtold = dtnow + timedelta(days=-1)
+        mail.due_at = dtold
+        mail.save()
+        self.assertFalse(Mail.objects.filter(due_at__isnull=True).exists())
+        self.assertTrue(Mail.objects.filter(due_at__lte=dtnow).exists())
+        self.assertTrue(Mail.objects.active_set().exists())
+
+        # Set Future Time ( Mail IS NOT SENT now! )
+        dtnew = dtnow + timedelta(days=+1)
+        mail.due_at = dtnew
+        mail.save()
+        self.assertFalse(Mail.objects.filter(due_at__isnull=True).exists())
+        self.assertFalse(Mail.objects.filter(due_at__lte=dtnow).exists())
+        self.assertFalse(Mail.objects.active_set().exists())
+
+    def test_active_recipient(self):
+        mail = self._create_mail()
+        mail.enabled = True
+        mail.save()
+
+        recipient = mail.add_recipient('you@domain.com')
+        self.assertIsNone(recipient.sent_at)
+        self.assertIsNone(mail.due_at)
+
+        # enabled Mail
+        self.assertTrue(Recipient.objects.active_set().exists())
+
+        # Set Time
+        mail.due_at = now() + timedelta(days=-1)
+        mail.save()
+        self.assertTrue(Recipient.objects.active_set().exists())
+
+        # Set Time(Future) Not Sent
+        mail.due_at = now() + timedelta(days=1)
+        mail.save()
+        self.assertFalse(Recipient.objects.active_set().exists())
+
+        #  Recipient alread sent
+        mail.due_at = None
+        mail.save()
+        recipient.sent_at = now()
+        recipient.save()
+        self.assertTrue(Mail.objects.active_set().exists())
+        self.assertFalse(Recipient.objects.active_set().exists())
+
+        # Add New Recipient
+        mail.add_recipient('other@domain.com')
+        self.assertTrue(Mail.objects.active_set().exists())
+        self.assertEqual(Recipient.objects.active_set().count(), 1)
+        self.assertEqual(Recipient.objects.count(), 2)

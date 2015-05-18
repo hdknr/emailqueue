@@ -10,10 +10,18 @@ import traceback
 
 import models
 
+from emailqueue.models import Mail
+
 
 logger = get_task_logger('emailsmtp')
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
                   'django.core.mail.backends.smtp.EmailBackend')
+
+
+@task
+def sendmessage():
+    for mail in Mail.objects.all():
+        pass
 
 
 @task

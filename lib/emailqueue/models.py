@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.db.models import Q
+from django.utils.timezone import now
 
 
 import os
@@ -90,6 +90,10 @@ class Postbox(BaseModel):
             self.address, self.forward,
         )
 
+    @property
+    def domain(self):
+        return self.address.split('@')[1]
+
 
 class Relay(BaseModel):
     ''' Relay Entries for Postbox
@@ -126,8 +130,9 @@ class MailAddress(BaseModel):
 
 class MailQuerySet(models.QuerySet):
     def active_set(self, basetime=None):
+        basetime = basetime or now()
         return self.filter(
-            Q(due_at__isnull=True) | Q(due_at__lte=basetime),
+            models.Q(due_at__isnull=True) | models.Q(due_at__lte=basetime),
             enabled=True,
         )
 
@@ -170,6 +175,26 @@ class Mail(BaseModel):
     def __unicode__(self):
         return self.subject
 
+    def add_recipient(self, email):
+        to = MailAddress.objects.get_or_create(email=email)[0]
+        recipient = Recipient.objects.get_or_create(
+            mail=self, to=to,
+            return_path='emq-{0}-{1}@{2}'.format(
+                self.id, to.id, self.sender.domain,
+            ),)[0]
+        return recipient
+
+
+class RecipientQuerySet(models.QuerySet):
+    def active_set(self, basetime=None):
+        basetime = basetime or now()
+        return self.filter(
+            models.Q(mail__due_at__isnull=True) |
+            models.Q(mail__due_at__lte=basetime),
+            mail__enabled=True,
+            sent_at__isnull=True,
+        )
+
 
 class Recipient(BaseModel):
     '''Recipients for a Mail
@@ -189,6 +214,8 @@ class Recipient(BaseModel):
     class Meta:
         verbose_name = _('Recipient')
         verbose_name_plural = _('Recipient')
+
+    objects = RecipientQuerySet.as_manager()
 
 
 class Attachment(BaseModel):
