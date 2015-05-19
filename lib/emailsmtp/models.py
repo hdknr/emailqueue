@@ -4,25 +4,23 @@ from django.utils.deconstruct import deconstructible
 
 from email import message_from_string
 
-from emailqueue.models import BaseModel, Service
+from emailqueue.models import BaseModel
 
 
-class SmtpServer(Service):
+class Server(BaseModel):
+    name = models.CharField(
+        _('Mail Service Name'), unique=True, max_length=50)
+
+    domain = models.CharField(
+        _('Mail Domain Name'), unique=True, max_length=50)
+
+    backend = models.CharField(
+        _('Mail Backend'), max_length=100,
+        default='django.core.mail.backends.smtp.EmailBackend',)
+
     class Meta:
         verbose_name = _('SMTP Server')
         verbose_name_plural = _('SMTP Server')
-
-    def save(self, *args, **kwargs):
-        self.class_name = 'smtpserver'
-        super(SmtpServer, self).save(*args, **kwargs)
-
-    def send(self, outbound):
-        import tasks
-        tasks.send_raw_message(
-            outbound.return_path,
-            [outbound.recipient.email],
-            outbound.raw_message,
-        )
 
 
 @deconstructible

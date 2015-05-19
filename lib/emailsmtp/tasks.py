@@ -11,6 +11,7 @@ import traceback
 import models
 
 from emailqueue.models import Mail
+from emailsmtp.models import Server
 
 
 logger = get_task_logger('emailsmtp')
@@ -21,6 +22,12 @@ BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
 @task
 def send_messages():
     for mail in Mail.objects.active_set():
+
+        server = Server.objects.filter(
+            domain=mail.sender.domain).first()
+        if not server:
+            continue
+
         for recipient in mail.recipient_set.active_set():
             if mail.delay():    # To next Mail
                 break
@@ -29,7 +36,8 @@ def send_messages():
             send_raw_message(
                 recipient.return_path,
                 [recipient.to.email],
-                recipient.create_message().as_string(),)
+                recipient.create_message().as_string(),
+                server.backend)
 
             recipient.sent_at = now()
             recipient.save()

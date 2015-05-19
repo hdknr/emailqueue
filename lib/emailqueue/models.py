@@ -38,29 +38,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Service(BaseModel):
-    ''' Mail Sending Service
-    '''
-    name = models.CharField(
-        _('Mail Service Name'), unique=True, max_length=50)
-    class_name = models.CharField(
-        _('Mail Service Class Name'), max_length=20)
-
-    class Meta:
-        verbose_name = _('Mail Service')
-        verbose_name_plural = _('Mail Service')
-
-    def __unicode__(self):
-        return self.name
-
-    @property
-    def instance(self):
-        return getattr(self, self.class_name)
-
-    def send(self, email):
-        raise NotImplemented
-
-
 class Postbox(BaseModel):
     ''' Mail Relay Definition
     '''
