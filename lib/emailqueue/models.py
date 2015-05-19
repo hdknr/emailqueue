@@ -10,6 +10,7 @@ from django import template
 import uuid
 import os
 # import hashlib
+from datetime import timedelta
 from email.mime.text import MIMEText
 from email import Charset
 
@@ -168,6 +169,14 @@ class Mail(BaseModel):
         _('Due At'), help_text=_('Due At'),
         null=True, blank=True, default=None)
 
+    sleep_from = models.TimeField(
+        _('Sleep From'), help_text=_('Sleep From'),
+        null=True, blank=True, default=None)
+
+    sleep_to = models.TimeField(
+        _('Sleep To'), help_text=_('Sleep To'),
+        null=True, blank=True, default=None)
+
     class Meta:
         verbose_name = _('Mail')
         verbose_name_plural = _('Mail')
@@ -190,6 +199,56 @@ class Mail(BaseModel):
     def subtype(self):
         # TODO: SHOULD BE configurable
         return 'plain'
+
+    def is_active(self, dt=None):
+        dt = dt or now()
+        return self.enabled and (
+            self.due_at is None or self.due_at <= dt)
+
+    def update_due_at(self, days=0):
+        self.due_at = now() + timedelta(days=days)
+
+        # WARN:microsecond is trunctad by MySQL 5.6+
+        self.due_at = self.due_at.replace(
+            hour=self.sleep_to.hour,
+            minute=self.sleep_to.minute,
+            second=self.sleep_to.second,
+            microsecond=self.sleep_to.microsecond,)
+        self.save()
+
+    def delay(self, dt=None):
+        dd = now()
+        dt = dt or dd.time()
+
+        if any([
+            not self.sleep_from, not self.sleep_to, not dt]
+        ):
+            return False
+
+        if all([
+            self.sleep_from <= self.sleep_to,
+            self.sleep_from <= dt,
+            dt <= self.sleep_to,
+        ]):
+            # MUST today
+            self.update_due_at()
+            return True
+
+        if all([
+            self.sleep_from > self.sleep_to,
+        ]):
+
+            if self.sleep_from <= dt:
+                # Tommorrow
+                self.update_due_at(1)
+                return True
+
+            elif dt <= self.sleep_to:
+                # Today
+                self.update_due_at()
+                return True
+
+        return False
 
 
 class RecipientQuerySet(models.QuerySet):

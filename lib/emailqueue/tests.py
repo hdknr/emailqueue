@@ -101,3 +101,30 @@ class MailTest(TestCase):
         self.assertTrue(Mail.objects.active_set().exists())
         self.assertEqual(Recipient.objects.active_set().count(), 1)
         self.assertEqual(Recipient.objects.count(), 2)
+
+    def test_delay(self):
+        mail = self._create_mail()
+        mail.enabled = True
+        mail.save()
+
+        self.assertIsNone(mail.due_at)
+        dt_now = now()
+        dt_sleep_from = dt_now - timedelta(minutes=1)
+        dt_sleep_to = dt_now + timedelta(minutes=1)
+
+        # ms is truncated by MySQL 5.6+
+        dt_sleep_from = dt_sleep_from.replace(microsecond=0)
+        dt_sleep_to = dt_sleep_to.replace(microsecond=0)
+
+        mail.sleep_from = dt_sleep_from.time()
+        mail.sleep_to = dt_sleep_to.time()
+
+        self.assertTrue(mail.is_active())
+        self.assertIsNone(mail.due_at)
+        self.assertTrue(mail.delay())           # This Mail MUST NOT be sent
+
+        mail2 = Mail.objects.get(id=mail.id)     # reoad
+
+        self.assertIsNotNone(mail2.due_at)
+        self.assertEqual(mail2.due_at, dt_sleep_to)
+        self.assertFalse(mail2.is_active())
