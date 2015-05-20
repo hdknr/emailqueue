@@ -32,7 +32,6 @@ def send_messages():
             if mail.delay():    # To next Mail
                 break
 
-            # TODO: insert SLEEPING ...
             send_raw_message(
                 recipient.return_path,
                 [recipient.to.email],
@@ -41,6 +40,8 @@ def send_messages():
 
             recipient.sent_at = now()
             recipient.save()
+
+            server.wait()
 
 
 @task
