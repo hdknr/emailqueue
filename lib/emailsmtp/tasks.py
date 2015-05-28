@@ -5,6 +5,8 @@ from django.utils.timezone import now
 from celery import current_task
 from celery.utils.log import get_task_logger
 from celery.task import task
+from celery import shared_task
+
 
 import traceback
 
@@ -19,32 +21,39 @@ BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
                   'django.core.mail.backends.smtp.EmailBackend')
 
 
-@task
-def send_messages():
+@shared_task
+def send_mail(mail):
+    mail = isinstance(mail, Mail) and mail or Mail.objects.get(id=mail)
+
+    server = Server.objects.filter(
+        domain=mail.sender.domain).first()
+
+    if not server:
+        continue
+
+    for recipient in mail.recipient_set.active_set():
+        if mail.delay():    # make this Mail pending state
+            break
+
+        send_raw_message(
+            recipient.return_path,
+            [recipient.to.email],
+            recipient.create_message().as_string(),
+            server.backend)
+
+        recipient.sent_at = now()
+        recipient.save()
+
+        server.wait()
+
+
+@shared_task
+def send_mail_all():
     for mail in Mail.objects.active_set():
-
-        server = Server.objects.filter(
-            domain=mail.sender.domain).first()
-        if not server:
-            continue
-
-        for recipient in mail.recipient_set.active_set():
-            if mail.delay():    # To next Mail
-                break
-
-            send_raw_message(
-                recipient.return_path,
-                [recipient.to.email],
-                recipient.create_message().as_string(),
-                server.backend)
-
-            recipient.sent_at = now()
-            recipient.save()
-
-            server.wait()
+        send_mail(mail)
 
 
-@task
+@shared_task
 def send_raw_message(
         return_path, recipients,
         raw_message, *args, **kwargs):

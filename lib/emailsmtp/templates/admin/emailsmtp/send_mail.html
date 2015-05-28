@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ form.media.css }}
+{{ form.admin_media }}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+{% endblock %}
+
+
+{% block content %}
+<h1> Sending Email </h1>
+<div id="content-main">
+
+<form method="post"> {% csrf_token %}
+<table>
+ {{ form.as_table }}
+</table>
+<input type="submit" value="Send" />
+
+{{ form.media.js }}
+
+{% prepopulated_fields_js %}
+</form>
+</div>
+{% endblock %}
