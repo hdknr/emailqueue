@@ -29,10 +29,15 @@ def send_mail(mail):
         domain=mail.sender.domain).first()
 
     if not server:
-        continue
+        logger.debug("No Server for {0}".format(mail.sender.domain))
+        return
+
+    logger.debug("Mail({0}) is sending {1} recipients".format(
+        mail.id, mail.recipient_set.active_set()))
 
     for recipient in mail.recipient_set.active_set():
         if mail.delay():    # make this Mail pending state
+            logger.info("Mail({0}) is delayed".format(mail.id))
             break
 
         send_raw_message(
@@ -64,7 +69,7 @@ def send_raw_message(
             string expression of Python email.message.Message object
     '''
 
-    logger = current_task.get_logger()
+    # logger = current_task.get_logger()
     try:
         conn = get_connection(backend=BACKEND)
         conn.open()     # django.core.mail.backends.smtp.EmailBackend

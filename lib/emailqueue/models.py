@@ -108,12 +108,42 @@ class MailAddress(BaseModel):
         return self.email
 
 
+class MailTemplate(BaseModel):
+    sender = models.ForeignKey(
+        Postbox,
+        verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
+
+    name = models.CharField(
+        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
+        unique=True, db_index=True)
+
+    subject = models.TextField(
+        _('Mail Subject'), help_text=_('Mail Subject Help'), )
+
+    body = models.TextField(
+        _('Mail Body'), help_text=_('Mail Body Help'), )
+
+    class Meta:
+        verbose_name = _('Mail Template')
+        verbose_name_plural = _('Mail Template')
+
+
 class MailQuerySet(models.QuerySet):
     def active_set(self, basetime=None):
         basetime = basetime or now()
         return self.filter(
             models.Q(due_at__isnull=True) | models.Q(due_at__lte=basetime),
             enabled=True,
+        )
+
+    def create_from_template(self, name, **kwargs):
+        mt = MailTemplate.objects.get(name=name)
+        return self.create(
+            sender=mt.sender,
+            name=mt.name,
+            subject=mt.subject,
+            body=mt.body,
+            **kwargs
         )
 
 

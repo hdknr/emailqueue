@@ -72,4 +72,5 @@ class Inbound(BaseModel):
 
             :rtype: email.message.Message
         '''
-        return message_from_string(self.raw_message)
+        # return message_from_string(self.raw_message)
+        return message_from_string(self.raw_message.encode('utf8'))
