@@ -257,6 +257,39 @@ class Mail(BaseModel):
 
         return False
 
+    def rendered_message(self, mail_address):
+        ''' MailAddress Object'''
+        return template.Template(self.body).render(
+            template.Context(dict(
+                to=mail_address,
+                ctx=self.ctx,
+            )))
+
+    def create_message(self, mail_address, encoding="utf-8",):
+        ''' MailAddress Object'''
+
+        # TODO: encoding depends on to.email doain actually
+        message_id = uuid.uuid1().hex
+
+        if encoding == 'utf-8':
+            pass
+        elif encoding == "shift_jis":
+            #: DoCoMo
+            #: TODO chekck message encoding and convert it
+            Charset.add_charset(
+                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
+            Charset.add_codec('shift_jis', 'cp932')
+
+        message = MIMEText(
+            self.rendered_message(mail_address), self.subtype, encoding)
+
+        message['Subject'] = self.subject
+        message['From'] = self.sender.address
+        message['To'] = mail_address.email
+        message['Message-ID'] = message_id
+
+        return message
+
 
 class RecipientQuerySet(models.QuerySet):
     def active_set(self, basetime=None):
@@ -290,35 +323,8 @@ class Recipient(BaseModel):
 
     objects = RecipientQuerySet.as_manager()
 
-    def rendered_message(self):
-        return template.Template(self.mail.body).render(
-            template.Context(dict(
-                to=self.to,
-                ctx=self.mail.ctx,
-            )))
-
     def create_message(self, encoding="utf-8",):
-        # TODO: encoding depends on to.email doain actually
-        message_id = uuid.uuid1().hex
-
-        if encoding == 'utf-8':
-            pass
-        elif encoding == "shift_jis":
-            #: DoCoMo
-            #: TODO chekck message encoding and convert it
-            Charset.add_charset(
-                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
-            Charset.add_codec('shift_jis', 'cp932')
-
-        message = MIMEText(
-            self.rendered_message(), self.mail.subtype, encoding)
-
-        message['Subject'] = self.mail.subject
-        message['From'] = self.mail.sender.address
-        message['To'] = self.to.email
-        message['Message-ID'] = message_id
-
-        return message
+        return self.mail.create_message(self.to)
 
 
 class Attachment(BaseModel):

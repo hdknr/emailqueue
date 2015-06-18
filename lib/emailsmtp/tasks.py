@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.mail import get_connection
 from django.utils.timezone import now
 
-from celery import current_task
+# from celery import current_task
 from celery.utils.log import get_task_logger
 from celery.task import task
 from celery import shared_task
@@ -12,7 +12,7 @@ import traceback
 
 import models
 
-from emailqueue.models import Mail
+from emailqueue.models import Mail, MailAddress
 from emailsmtp.models import Server
 
 
@@ -50,6 +50,35 @@ def send_mail(mail):
         recipient.save()
 
         server.wait()
+
+
+@shared_task
+def send_mail_test(mail, recipients=None):
+    ''' recipents : list of email address '''
+    mail = isinstance(mail, Mail) and mail or Mail.objects.get(id=mail)
+
+    server = Server.objects.filter(
+        domain=mail.sender.domain).first()
+
+    if not server:
+        logger.debug("No Server for {0}".format(mail.sender.domain))
+        return
+
+    recipients = recipients or [mail.sender.forward]
+
+    for recipient in recipients:
+
+        to = MailAddress.objects.get_or_create(
+            email=recipient)[0]
+
+        return_path = "test-{0}-{1}@{2}".format(
+            mail.id, to.id, mail.sender.domain)
+
+        send_raw_message(
+            return_path,
+            [recipient],
+            mail.create_message(to).as_string(),
+            server.backend)
 
 
 @shared_task

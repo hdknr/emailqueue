@@ -2,6 +2,10 @@ from django.contrib import admin
 from django.apps import apps
 
 
+class RecipientAdmin(admin.ModelAdmin):
+    raw_id_fields = ['mail', ]
+
+
 for name, model in apps.get_app_config(
         __name__.split('.')[-2:][0]).models.items():
 

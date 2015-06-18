@@ -84,3 +84,15 @@ class Command(Command):
                     send_mail(id)
             else:
                 send_mail_all()
+
+    class SendMailTest(SubCommand):
+        name = "send_mail_test"
+        description = "Send test messages of Mail"
+        args = [
+            (('id',), dict(nargs=1, help="Mail ID")),
+            (('recipients',), dict(nargs="*", help="Mail ID")),
+        ]
+
+        def run(self, params, **options):
+            from emailsmtp.tasks import send_mail_test
+            send_mail_test(params.id[0], params.recipients)
