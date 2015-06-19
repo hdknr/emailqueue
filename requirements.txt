@@ -1,9 +1,5 @@
 django
 MySQL-python
 enum34
-south
 Celery
-boto
-django-tastypie
-pycrypto
 requests
