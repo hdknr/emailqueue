@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.mail import get_connection
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware, get_current_timezone
 
 # from celery import current_task
 from celery.utils.log import get_task_logger
@@ -19,6 +19,11 @@ from emailsmtp.models import Server
 logger = get_task_logger('emailsmtp')
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
                   'django.core.mail.backends.smtp.EmailBackend')
+
+
+def make_eta(when):
+    ''' ETA time '''
+    return when.tzinfo and when or get_current_timezone().localize(when)
 
 
 @shared_task

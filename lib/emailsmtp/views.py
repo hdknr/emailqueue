@@ -16,8 +16,7 @@ def send_mail(request, id):
         data=request.POST or None
     )
     if form.is_valid():
-        print form.cleaned_data
-        pass
+        form.send_mail(mail)
 
     return TemplateResponse(
         request,

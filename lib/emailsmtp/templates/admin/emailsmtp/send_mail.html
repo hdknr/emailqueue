@@ -18,6 +18,7 @@
 <h1> Sending Email </h1>
 <div id="content-main">
 
+{{ from.errors }}
 <form method="post"> {% csrf_token %}
 <table>
  {{ form.as_table }}

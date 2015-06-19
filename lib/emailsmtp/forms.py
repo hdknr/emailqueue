@@ -5,6 +5,9 @@ from django.contrib.admin.templatetags.admin_static import static
 from django.utils.translation import (
     ugettext_lazy as _,
 )
+import re
+
+import tasks
 
 
 def admin_media():
@@ -41,3 +44,20 @@ class SendMailForm(forms.Form):
     @property
     def admin_media(self):
         return admin_media()
+
+    def get_recipients(self):
+        return re.findall(
+            r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
+            self.cleaned_data['recipients'], re.MULTILINE)
+
+    def send_mail(self, mail_obj):
+        send_at = self.cleaned_data['send_at']
+        is_test = self.cleaned_data['is_test']
+        if is_test:
+            if send_at:
+                print send_at
+                tasks.send_mail_test.apply_async(
+                    [mail_obj.id, self.get_recipients()],
+                    eta=tasks.make_eta(send_at))
+            else:
+                tasks.send_mail_test(mail_obj, self.get_recipients())
