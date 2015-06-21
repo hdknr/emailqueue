@@ -3,8 +3,6 @@
 
 mail.cf:
 
-- to eat all outbound message by "jail" transport
-
     ::
 
         default_transport=jail
