@@ -411,26 +411,34 @@ class Message(BaseModel):
         except:
             return None
 
-    def create_report(self):
-        params = utils.from_return_path(self.recipient)
+    @property
+    def bounced_parameters(self):
+        return utils.from_return_path(self.recipient)
+
+
+class ReportQuerySet(models.QuerySet):
+    def create_from_message(self, message):
+        params = message.bounced_parameters
         if not params:
-            return
+            return None
 
         try:
             address = MailAddress.objects.get(id=params['to'])
 
-            report, created = Report.objects.get_or_create(
-                address=address, bounce=self,
+            report, created = self.objects.get_or_create(
+                address=address, bounce=message,
                 mail=Mail.objects.get(id=params['msg']))
 
             if created:
                 address.bounced = address.bounced + 1
                 address.save()
-                report.action = self.dsn_action
-                report.status = self.dsn_status
+                report.action = message.dsn_action
+                report.status = message.dsn_status
                 report.save()
+            return report
         except:
             pass
+        return None
 
 
 class Report(BaseModel):
@@ -459,3 +467,5 @@ class Report(BaseModel):
     class Meta:
         verbose_name = _(u'Report')
         verbose_name_plural = _(u'Report')
+
+    objects = ReportQuerySet.as_manager()
