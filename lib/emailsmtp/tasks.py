@@ -137,9 +137,5 @@ def save_inbound(sender, recipient, raw_message):
     inbound = queue_models.Message(
         sender=sender, recipient=recipient, raw_message=raw_message)
     inbound.save()
+    inbound.create_report()
     return inbound.id
-
-
-@task
-def process_inbound(id):
-    models.Inbound.objects.filter(id=id).update(processed_at=now())
