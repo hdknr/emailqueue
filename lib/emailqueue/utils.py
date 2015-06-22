@@ -2,6 +2,7 @@ from django.conf import settings
 
 import re
 import hashlib
+# import traceback
 
 
 def to_raw_return_path(**kwargs):
@@ -9,13 +10,11 @@ def to_raw_return_path(**kwargs):
 
 
 def from_raw_return_path(address):
-    try:
-        return re.search("_".join([
-            r"^(?P<prefix>[^_]+)",
-            r"(?P<msg>[^_]+)",
-            r"(?P<to>.+)@(?P<domain>.+)$"]), address).groupdict()
-    except:
-        return None
+    m = re.search("_".join([
+        r"^(?P<prefix>[^_]+)",
+        r"(?P<msg>[^_]+)",
+        r"(?P<to>[^_]+)@(?P<domain>.+)$"]), address)
+    return m and m.groupdict() or None
 
 
 def get_hashcode(data):
@@ -30,7 +29,7 @@ def to_return_path(**kwargs):
 
 
 def from_return_path(return_path):
-    m = re.search(r"^R(?P<code>[^_]+)_(?P<address>.+)$", return_path)
+    m = re.search(r"^R(?P<code>[^_]+)_(?P<address>.+)", return_path)
     m = m and m.groupdict() or {}
     address = m.get('address', '')
     code = get_hashcode(address)

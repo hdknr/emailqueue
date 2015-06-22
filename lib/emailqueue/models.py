@@ -13,6 +13,8 @@ from datetime import timedelta
 from email import Charset,  message_from_string
 from email.mime.text import MIMEText
 
+import utils
+
 
 class FileField(models.FileField):
     def get_internal_type(self):
@@ -98,6 +100,10 @@ class MailAddress(BaseModel):
     email = models.EmailField(
         _('Email Address'),
         help_text=_('Email Address Help'), max_length=50)
+
+    bounced = models.IntegerField(
+        _('Bounced Count'),
+        help_text=_('Bounced Count Help'), default=0)
 
     class Meta:
         verbose_name = _('Mail Address')
@@ -193,12 +199,12 @@ class Mail(BaseModel):
         return self.subject
 
     def add_recipient(self, email):
-        to = MailAddress.objects.get_or_create(email=email)[0]
-        recipient = Recipient.objects.get_or_create(
+        to, created = MailAddress.objects.get_or_create(email=email)
+        recipient, created = Recipient.objects.get_or_create(
             mail=self, to=to,
-            return_path='emq-{0}-{1}@{2}'.format(
-                self.id, to.id, self.sender.domain,
-            ),)[0]
+            return_path=utils.to_return_path(
+                prefix='eml', msg=self.id,
+                to=to.id, domain=self.sender.domain))
         return recipient
 
     @property
@@ -405,15 +411,42 @@ class Message(BaseModel):
         except:
             return None
 
+    def create_report(self):
+        params = utils.from_return_path(self.recipient)
+        if not params:
+            return
+
+        try:
+            address = MailAddress.objects.get(id=params['to'])
+
+            report, created = Report.objects.get_or_create(
+                address=address, bounce=self,
+                mail=Mail.objects.get(id=params['msg']))
+
+            if created:
+                address.bounced = address.bounced + 1
+                address.save()
+                report.action = self.dsn_action
+                report.status = self.dsn_status
+                report.save()
+        except:
+            pass
+
 
 class Report(BaseModel):
     address = models.ForeignKey(
         MailAddress, verbose_name=_('Mail Address'),
         help_text=_('Mail Address Help'))
 
+    mail = models.ForeignKey(
+        Mail, verbose_name=_('Mail'),
+        help_text=_('Mail Help'),
+        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
+
     bounce = models.ForeignKey(
         Message, verbose_name=_('Bounce Message'),
-        help_text=_('Bounce Message Help'))
+        help_text=_('Bounce Message Help'),
+        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
 
     action = models.CharField(
         _('DNS Action'), help_text=_('DSN Action Help'),  max_length=10,

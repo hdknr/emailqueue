@@ -12,7 +12,10 @@ import traceback
 
 import models
 
-from emailqueue import models as queue_models
+from emailqueue import (
+    models as queue_models,
+    utils,
+)
 # import Mail, MailAddress, Message
 
 
@@ -81,8 +84,8 @@ def send_mail_test(mail, recipients=None):
         to = queue_models.MailAddress.objects.get_or_create(
             email=recipient)[0]
 
-        return_path = "test-{0}-{1}@{2}".format(
-            mail.id, to.id, mail.sender.domain)
+        return_path = utils.to_return_path(
+            prefix='test', msg=mail.id, to=to.id, domain=mail.sender.domain)
 
         send_raw_message(
             return_path,

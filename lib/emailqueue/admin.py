@@ -6,6 +6,10 @@ class RecipientAdmin(admin.ModelAdmin):
     raw_id_fields = ['mail', ]
 
 
+class ReportAdmin(admin.ModelAdmin):
+    raw_id_fields = ['address', 'mail', 'bounce', ]
+
+
 for name, model in apps.get_app_config(
         __name__.split('.')[-2:][0]).models.items():
 
