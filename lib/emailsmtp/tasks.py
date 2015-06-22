@@ -139,7 +139,17 @@ def save_inbound(sender, recipient, raw_message):
     inbound.save()
 
     report = queue_models.Report.objects.create_from_message(inbound)
-    if not report:
-        inbound.create_report()
+
+    if report:
+        # TODO: find Relay entry
+        pass
+    else:
+        relay = queue_models.Relay.objects.create_from_message(inbound)
+        if relay:
+            server = models.Server.objects.filter(
+                domain=relay.postbox.domain).first()
+            send_raw_message(
+                relay.address, [relay.postbox.forward],
+                raw_message, server.backend)
 
     return inbound.id

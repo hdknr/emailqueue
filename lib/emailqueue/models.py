@@ -39,8 +39,27 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class MailAddress(BaseModel):
+    ''' Mail Address
+    '''
+    email = models.EmailField(
+        _('Email Address'),
+        help_text=_('Email Address Help'), max_length=50)
+
+    bounced = models.IntegerField(
+        _('Bounced Count'),
+        help_text=_('Bounced Count Help'), default=0)
+
+    class Meta:
+        verbose_name = _('Mail Address')
+        verbose_name_plural = _('Mail Address')
+
+    def __unicode__(self):
+        return self.email
+
+
 class Postbox(BaseModel):
-    ''' Mail Relay Definition
+    ''' Mail Forwarding Definition
     '''
     address = models.EmailField(
         _('Postbox Address'), help_text=_('Postbox Address Help'),
@@ -76,15 +95,42 @@ class Postbox(BaseModel):
         return self.address.split('@')[1]
 
 
+class RelayQuerySet(models.QuerySet):
+    def create_from_message(self, message):
+        postbox = Postbox.objects.filter(address=message.recipient).first()
+        if not postbox:
+            return None
+
+        # TODO Postbox.blacklist filter
+
+        sender, created = MailAddress.objects.get_or_create(
+            email=message.sender)
+
+        address = utils.to_raw_return_path(
+            prefix="relay", msg=sender.id, to=postbox.id,
+            domain=postbox.domain)
+
+        relay, created = self.get_or_create(
+            address=address,
+            postbox=postbox, sender=sender)
+
+        return relay
+
+
 class Relay(BaseModel):
     ''' Relay Entries for Postbox
     '''
+    address = models.EmailField(
+        _('Relay Address'), help_text=_('Relay Address Help'),
+        max_length=50, db_index=True, unique=True)
+
     postbox = models.ForeignKey(
         Postbox,
         verbose_name=_('Postbox'), help_text=_('Postbox Help'))
 
-    sender = models.EmailField(
-        _('Sender Address'), help_text=_('Sender Address Help'), max_length=50)
+    sender = models.ForeignKey(
+        MailAddress,
+        verbose_name=_('Sedner Address'), help_text=_('Sender Address Help'))
 
     is_spammer = models.BooleanField(
         _('Is Spammer'), default=False)
@@ -93,24 +139,7 @@ class Relay(BaseModel):
         verbose_name = _('Relay')
         verbose_name_plural = _('Relay')
 
-
-class MailAddress(BaseModel):
-    ''' Mail Address
-    '''
-    email = models.EmailField(
-        _('Email Address'),
-        help_text=_('Email Address Help'), max_length=50)
-
-    bounced = models.IntegerField(
-        _('Bounced Count'),
-        help_text=_('Bounced Count Help'), default=0)
-
-    class Meta:
-        verbose_name = _('Mail Address')
-        verbose_name_plural = _('Mail Address')
-
-    def __unicode__(self):
-        return self.email
+    objects = RelayQuerySet.as_manager()
 
 
 class MailTemplate(BaseModel):
