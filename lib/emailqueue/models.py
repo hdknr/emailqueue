@@ -9,7 +9,6 @@ from django import template
 
 import uuid
 import os
-# import hashlib
 from datetime import timedelta
 from email import Charset,  message_from_string
 from email.mime.text import MIMEText

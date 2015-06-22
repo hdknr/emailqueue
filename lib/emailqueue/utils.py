@@ -1,11 +1,37 @@
-from enum import Enum as BaseEnum
+from django.conf import settings
+
+import re
+import hashlib
 
 
-def Enum(name, **param):
-    items = dict((k, v[0]) for k, v in param.items())
-    newenum = type(name, (BaseEnum, ), items)
-    for k in param:
-        item = getattr(newenum, k)
-        setattr(item, 'description', param[k][1])
-    newenum.choices = tuple(v for k, v in param.items())
-    return newenum
+def to_raw_return_path(**kwargs):
+    return "{prefix}_{msg}_{to}@{domain}".format(**kwargs)
+
+
+def from_raw_return_path(address):
+    try:
+        return re.search("_".join([
+            r"^(?P<prefix>[^_]+)",
+            r"(?P<msg>[^_]+)",
+            r"(?P<to>.+)@(?P<domain>.+)$"]), address).groupdict()
+    except:
+        return None
+
+
+def get_hashcode(data):
+    return "{0:x}".format(
+        hash(hashlib.sha256(data + settings.SECRET_KEY).digest()))
+
+
+def to_return_path(**kwargs):
+    raw_return_path = to_raw_return_path(**kwargs)
+    code = get_hashcode(raw_return_path)
+    return "R{0}_{1}".format(code, raw_return_path)
+
+
+def from_return_path(return_path):
+    m = re.search(r"^R(?P<code>[^_]+)_(?P<address>.+)$", return_path)
+    m = m and m.groupdict() or {}
+    address = m.get('address', '')
+    code = get_hashcode(address)
+    return (code == m.get('code', '')) and from_raw_return_path(address) or {}
