@@ -11,8 +11,8 @@ import uuid
 import os
 # import hashlib
 from datetime import timedelta
+from email import Charset,  message_from_string
 from email.mime.text import MIMEText
-from email import Charset
 
 
 class FileField(models.FileField):
@@ -340,3 +340,90 @@ class Attachment(BaseModel):
     class Meta:
         verbose_name = _('Attachment')
         verbose_name_plural = _('Attachment')
+
+
+class Message(BaseModel):
+    ''' Raw Message '''
+
+    sender = models.CharField(
+        _('Sender'), help_text=_('Sender Help'),  max_length=100)
+
+    recipient = models.CharField(
+        _('Recipient'), help_text=_('Recipient Help'), max_length=100)
+
+    raw_message = models.TextField(
+        _(u'Raw Message Text'), help_text=_(u'Raw Message Text Help'),
+        default=None, blank=True, null=True)
+
+    processed_at = models.DateTimeField(
+        _('Processed At'), null=True, blank=True, default=None)
+
+    class Meta:
+        verbose_name = _(u'Message')
+        verbose_name_plural = _(u'Message')
+
+    @property
+    def mailobject(self):
+        ''' return mail object
+
+            :rtype: email.message.Message
+        '''
+        def _cached():
+            # cache message_from_string(self.raw_message)
+            self._mailobject = message_from_string(
+                self.raw_message.encode('utf8'))
+            return self._mailobject
+
+        return getattr(self, '_mailobject', _cached())
+
+    @property
+    def is_multipart(self):
+        return self.mailobject and self.mailobject.is_multipart() or False
+
+    @property
+    def dsn(self):
+        def _cached():
+            if self.is_multipart and isinstance(
+                    self.mailobject.get_payload(), list):
+                # cache dns
+                self._dsn = self.mailobject.get_payload(1)
+                return self._dsn
+            return None
+
+        return getattr(self, '_dsn', _cached())
+
+    @property
+    def dsn_action(self):
+        try:
+            return self.dsn and self.dsn.get_payload(1)['action']
+        except:
+            return None
+
+    @property
+    def dsn_status(self):
+        try:
+            return self.dsn and self.dsn.get_payload(1)['status']
+        except:
+            return None
+
+
+class Report(BaseModel):
+    address = models.ForeignKey(
+        MailAddress, verbose_name=_('Mail Address'),
+        help_text=_('Mail Address Help'))
+
+    bounce = models.ForeignKey(
+        Message, verbose_name=_('Bounce Message'),
+        help_text=_('Bounce Message Help'))
+
+    action = models.CharField(
+        _('DNS Action'), help_text=_('DSN Action Help'),  max_length=10,
+        null=True, default=None, blank=True)
+
+    status = models.CharField(
+        _('DNS Status'), help_text=_('DSN Status Help'),  max_length=10,
+        null=True, default=None, blank=True)
+
+    class Meta:
+        verbose_name = _(u'Report')
+        verbose_name_plural = _(u'Report')

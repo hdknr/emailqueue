@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.mail import get_connection
-from django.utils.timezone import now, make_aware, get_current_timezone
+from django.utils.timezone import now, get_current_timezone
 
 # from celery import current_task
 from celery.utils.log import get_task_logger
@@ -12,8 +12,8 @@ import traceback
 
 import models
 
-from emailqueue.models import Mail, MailAddress
-from emailsmtp.models import Server
+from emailqueue import models as queue_models
+# import Mail, MailAddress, Message
 
 
 logger = get_task_logger('emailsmtp')
@@ -26,11 +26,16 @@ def make_eta(when):
     return when.tzinfo and when or get_current_timezone().localize(when)
 
 
+def get_mail_instance(mail):
+    return isinstance(mail, queue_models.Mail) and mail or \
+        queue_models.Mail.objects.get(id=mail)
+
+
 @shared_task
 def send_mail(mail):
-    mail = isinstance(mail, Mail) and mail or Mail.objects.get(id=mail)
+    mail = get_mail_instance(mail)
 
-    server = Server.objects.filter(
+    server = models.Server.objects.filter(
         domain=mail.sender.domain).first()
 
     if not server:
@@ -60,9 +65,9 @@ def send_mail(mail):
 @shared_task
 def send_mail_test(mail, recipients=None):
     ''' recipents : list of email address '''
-    mail = isinstance(mail, Mail) and mail or Mail.objects.get(id=mail)
+    mail = get_mail_instance(mail)
 
-    server = Server.objects.filter(
+    server = models.Server.objects.filter(
         domain=mail.sender.domain).first()
 
     if not server:
@@ -73,7 +78,7 @@ def send_mail_test(mail, recipients=None):
 
     for recipient in recipients:
 
-        to = MailAddress.objects.get_or_create(
+        to = queue_models.MailAddress.objects.get_or_create(
             email=recipient)[0]
 
         return_path = "test-{0}-{1}@{2}".format(
@@ -88,7 +93,7 @@ def send_mail_test(mail, recipients=None):
 
 @shared_task
 def send_mail_all():
-    for mail in Mail.objects.active_set():
+    for mail in queue_models.Mail.objects.active_set():
         send_mail(mail)
 
 
@@ -126,9 +131,8 @@ def send_raw_message(
 
 @task
 def save_inbound(sender, recipient, raw_message):
-    inbound = models.Inbound(
-        sender=sender, recipient=recipient,
-        raw_message=raw_message)
+    inbound = queue_models.Message(
+        sender=sender, recipient=recipient, raw_message=raw_message)
     inbound.save()
     return inbound.id
 
