@@ -4,17 +4,24 @@ import re
 import hashlib
 # import traceback
 
+DEFAULT_HANDLER = 'direct'
 
-def to_raw_return_path(**kwargs):
-    return "{prefix}_{msg}_{to}@{domain}".format(**kwargs)
+
+def to_raw_return_path(handler, domain, *args):
+    return "{handler}_{args}@{domain}".format(
+        handler=handler, domain=domain,
+        args="_".join(map(lambda i: str(i), args)))
 
 
 def from_raw_return_path(address):
-    m = re.search("_".join([
-        r"^(?P<prefix>[^_]+)",
-        r"(?P<msg>[^_]+)",
-        r"(?P<to>[^_]+)@(?P<domain>.+)$"]), address)
-    return m and m.groupdict() or None
+    m = re.search(
+        r"^(?P<handler>[^_]+)_(?P<args>[^@]+)@(?P<domain>.+)$",
+        address)
+    m = m and m.groupdict() or {
+        'handler': DEFAULT_HANDLER,
+        'domain': address.split('@')[1]}
+    m['args'] = m.get('args', '').split('_')
+    return m
 
 
 def get_hashcode(data):
@@ -22,8 +29,8 @@ def get_hashcode(data):
         hash(hashlib.sha256(data + settings.SECRET_KEY).digest()))
 
 
-def to_return_path(**kwargs):
-    raw_return_path = to_raw_return_path(**kwargs)
+def to_return_path(handler, domain, *args):
+    raw_return_path = to_raw_return_path(handler, domain, *args)
     code = get_hashcode(raw_return_path)
     return "R{0}_{1}".format(code, raw_return_path)
 
@@ -33,4 +40,6 @@ def from_return_path(return_path):
     m = m and m.groupdict() or {}
     address = m.get('address', '')
     code = get_hashcode(address)
-    return (code == m.get('code', '')) and from_raw_return_path(address) or {}
+    if code == m.get('code', ''):
+        return from_raw_return_path(address)
+    return {'handler': DEFAULT_HANDLER, 'domain': '', 'args': ()}

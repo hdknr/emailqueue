@@ -106,15 +106,18 @@ class RelayQuerySet(models.QuerySet):
         sender, created = MailAddress.objects.get_or_create(
             email=message.sender)
 
-        address = utils.to_raw_return_path(
-            prefix="relay", msg=sender.id, to=postbox.id,
-            domain=postbox.domain)
+        address = utils.to_return_path(
+            "relay", postbox.domain,
+            sender.id, postbox.id,)
 
         relay, created = self.get_or_create(
             address=address,
             postbox=postbox, sender=sender)
 
         return relay
+
+    def handle_error(self, mesage):
+        pass
 
 
 class Relay(BaseModel):
@@ -232,7 +235,7 @@ class Mail(BaseModel):
         recipient, created = Recipient.objects.get_or_create(
             mail=self, to=to,
             return_path=utils.to_return_path(
-                prefix='eml', msg=self.id,
+                prefix='mail', msg=self.id,
                 to=to.id, domain=self.sender.domain))
         return recipient
 
@@ -335,6 +338,9 @@ class RecipientQuerySet(models.QuerySet):
             sent_at__isnull=True,
         )
 
+    def handle_error(self, message):
+        pass
+
 
 class Recipient(BaseModel):
     '''Recipients for a Mail
@@ -379,14 +385,26 @@ class Attachment(BaseModel):
 class Message(BaseModel):
     ''' Raw Message '''
 
-    sender = models.CharField(
-        _('Sender'), help_text=_('Sender Help'),  max_length=100)
+    sender = models.EmailField(
+        _('Sender'), help_text=_('Sender Help'),  max_length=100,
+        default=None, blank=True, null=True)
 
-    recipient = models.CharField(
-        _('Recipient'), help_text=_('Recipient Help'), max_length=100)
+    recipient = models.EmailField(
+        _('Recipient'), help_text=_('Recipient Help'), max_length=100,
+        default=None, blank=True, null=True)
 
     raw_message = models.TextField(
         _(u'Raw Message Text'), help_text=_(u'Raw Message Text Help'),
+        default=None, blank=True, null=True)
+
+    forward_sender = models.EmailField(
+        _('Forwarding Sender'),
+        help_text=_('Fowarding Sender Help'),  max_length=100,
+        default=None, blank=True, null=True)
+
+    forward_recipient = models.EmailField(
+        _('Forwarding Recipient'),
+        help_text=_('Forwarding Recipient Help'), max_length=100,
         default=None, blank=True, null=True)
 
     processed_at = models.DateTimeField(
@@ -443,6 +461,19 @@ class Message(BaseModel):
     @property
     def bounced_parameters(self):
         return utils.from_return_path(self.recipient)
+
+    def get_handler(self):
+        if self.dsn:
+            return utils.from_return_path(self.recipient)
+        else:
+            return {'handler': 'direct', }
+
+    @property
+    def forward_return_path(self):
+        domain = self.recipient.split('@')[1]
+        address = utils.to_return_path(
+            "fwd", domain, str(self.id), )
+        return address
 
 
 class ReportQuerySet(models.QuerySet):

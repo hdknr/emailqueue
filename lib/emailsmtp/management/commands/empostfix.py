@@ -29,7 +29,6 @@ from pycommand.djcommand import Command, SubCommand
 
 import sys
 import logging
-import traceback
 
 from emailsmtp.tasks import save_inbound
 
@@ -57,16 +56,9 @@ class Command(Command):
                 log.warn('no stdin')
                 return
 
-            iid = save_inbound(
+            save_inbound(
                 params.sender[0], params.recipient[0],
                 ''.join(sys.stdin.read()))
-
-            try:
-                log.debug("bouncer.handle_main:process journal =%d" % iid)
-                # process_journal.delay(jid)      #: defualt is async
-            except:
-                for err in traceback.format_exc().split('\n'):
-                    log.error("bouncer.handle_main:%s" % err)
 
     class SendMail(SubCommand):
         name = "send_mail"

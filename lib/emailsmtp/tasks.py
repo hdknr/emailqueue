@@ -15,6 +15,7 @@ import models
 from emailqueue import (
     models as queue_models,
     utils,
+    tasks as queue_tasks,
 )
 # import Mail, MailAddress, Message
 
@@ -32,6 +33,11 @@ def make_eta(when):
 def get_mail_instance(mail):
     return isinstance(mail, queue_models.Mail) and mail or \
         queue_models.Mail.objects.get(id=mail)
+
+
+def get_message_instance(message):
+    return isinstance(message, queue_models.Message) and message or \
+        queue_models.Message.objects.get(id=message)
 
 
 @shared_task
@@ -85,7 +91,7 @@ def send_mail_test(mail, recipients=None):
             email=recipient)[0]
 
         return_path = utils.to_return_path(
-            prefix='test', msg=mail.id, to=to.id, domain=mail.sender.domain)
+            'test', mail.sender.domain, mail.id, to.id)
 
         send_raw_message(
             return_path,
@@ -134,22 +140,26 @@ def send_raw_message(
 
 @task
 def save_inbound(sender, recipient, raw_message):
-    inbound = queue_models.Message(
+    inbound = queue_models.Message.objects.create(
         sender=sender, recipient=recipient, raw_message=raw_message)
-    inbound.save()
 
-    report = queue_models.Report.objects.create_from_message(inbound)
+    queue_tasks.process_message(
+        inbound, forwarder='emailsmtp.tasks.forward')
 
-    if report:
-        # TODO: find Relay entry
-        pass
-    else:
-        relay = queue_models.Relay.objects.create_from_message(inbound)
-        if relay:
-            server = models.Server.objects.filter(
-                domain=relay.postbox.domain).first()
-            send_raw_message(
-                relay.address, [relay.postbox.forward],
-                raw_message, server.backend)
 
-    return inbound.id
+@shared_task
+def forward(message):
+    ''' queue_models.Message '''
+
+    message = get_message_instance(message)
+    server = models.Server.objects.filter(
+        domain=message.forward_sender.split('@')[1]).first()
+
+    send_raw_message(
+        message.forward_sender,
+        [message.forward_recipient],
+        message.raw_message,
+        server.backend)
+
+    message.processed_at = now()
+    message.save()
