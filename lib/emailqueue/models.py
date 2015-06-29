@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.timezone import now
 from django import template
+from django.core import serializers
 
 import uuid
 import os
@@ -37,6 +38,10 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def to_fixture(self):
+        return serializers.serialize(
+            "json", [self], ensure_ascii=False, indent=4)
 
 
 class MailAddress(BaseModel):
