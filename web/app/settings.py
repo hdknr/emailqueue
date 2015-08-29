@@ -112,9 +112,8 @@ LOGGING = {
 }
 ######
 #
+BROKER_URL = 'amqp://emailqueue:emailqueue@localhost:5672/emailqueue'
 INSTALLED_APPS += (
     'djcelery',
     'kombu.transport.django',
 )
-#
-BROKER_URL = 'amqp://emailqueue:emailqueue@localhost:5672/emailqueue'

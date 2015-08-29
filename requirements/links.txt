@@ -1,2 +1,4 @@
 -e git+https://github.com/hdknr/djado.git#egg=djado
 -e git+https://github.com/hdknr/pycommand.git#egg=pycommand
+-e git+https://github.com/hdknr/djasync.git#egg=djasync
+
