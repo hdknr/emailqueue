@@ -99,8 +99,8 @@ DATABASES['default'] = {
     'NAME': 'emailqueue',
     'USER': 'emailqueue',
     'PASSWORD': 'emailqueue',
-    'TEST_CHARSET': 'utf8',
-    'TEST_DATABASE_COLLATION': 'utf8_general_ci',
+    # 'TEST_CHARSET': 'utf8',
+    # 'TEST_DATABASE_COLLATION': 'utf8_general_ci',
 }
 
 MIDDLEWARE_CLASSES += (
@@ -115,6 +115,7 @@ except:
 
 # LOGGING
 try:
-    from app.logs import *      # noqa
+    # from app.logs import *      # noqa
+    pass
 except:
     LOGGING = {'version': 1, }

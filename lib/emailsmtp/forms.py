@@ -64,6 +64,6 @@ class SendMailForm(forms.Form):
         # is_test = self.cleaned_data['is_test']
 
         # if send_at is None, send now. Otherwise, later.
-        tasks.send_mail_test.apply_async(
-            [mail_obj.id, self.get_recipients()],
+        tasks.send_mail.apply_async(
+            args=[mail_obj.id, self.get_recipients()],
             eta=tasks.make_eta(send_at))

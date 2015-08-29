@@ -80,12 +80,9 @@ class Command(Command):
         ]
 
         def run(self, params, **options):
-            from emailsmtp.tasks import send_mail, send_mail_all
-            if params.id:
-                for id in params.id:
-                    send_mail(id)
-            else:
-                send_mail_all()
+            from emailsmtp.tasks import send_mail
+            for id in params.id:
+                send_mail(id)
 
     class SendMailTest(SubCommand):
         name = "send_mail_test"

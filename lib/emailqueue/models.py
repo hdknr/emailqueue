@@ -236,10 +236,7 @@ class Mail(BaseModel):
     def add_recipient(self, email):
         to, created = MailAddress.objects.get_or_create(email=email)
         recipient, created = Recipient.objects.get_or_create(
-            mail=self, to=to,
-            return_path=utils.to_return_path(
-                prefix='mail', msg=self.id,
-                to=to.id, domain=self.sender.domain))
+            mail=self, to=to,)
         return recipient
 
     @property
@@ -337,7 +334,7 @@ class RecipientQuerySet(models.QuerySet):
         return self.filter(
             models.Q(mail__due_at__isnull=True) |
             models.Q(mail__due_at__lte=basetime),
-            mail__enabled=True,
+            # mail__enabled=True,
             sent_at__isnull=True,
         )
 
@@ -368,6 +365,15 @@ class Recipient(BaseModel):
 
     def create_message(self, encoding="utf-8",):
         return self.mail.create_message(self.to)
+
+    def save(self, *args, **kwargs):
+        ''' If return_path is not set, create it before `save` '''
+        if not self.return_path and self.mail and self.to:
+            self.return_path = utils.to_return_path(
+                'mail', self.mail.sender.domain,
+                self.mail.id, self.to.id, )
+
+        super(Recipient, self).save(*args, **kwargs)
 
 
 class Attachment(BaseModel):

@@ -1,10 +1,11 @@
+''' Tasks for emailsmtp
+'''
 from django.conf import settings
 from django.core.mail import get_connection
 from django.utils.timezone import now, get_current_timezone
 
 # from celery import current_task
 from celery.utils.log import get_task_logger
-from celery.task import task
 from celery import shared_task
 
 
@@ -25,7 +26,7 @@ BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
 
 
 def make_eta(when):
-    ''' ETA(estimated time of arrival) time
+    '''ETA(estimated time of arrival) time
 
         :param when:  :py:class:`datetime.datetime`
         :return: :py:class:`datetime.datetime` with timezone
@@ -39,7 +40,8 @@ def make_eta(when):
 def get_mail_instance(mail):
     ''' Find `emailqueue.models.Mail` instance
 
-        :param mail:`emailqueue.models.Mail` instance or 'id' for instance
+        :param mail: :ref:`emailqueue.models.Mail` instance
+                     or 'id' for instance
         :return: :ref:`emailqueue.models.Mail` instance
     '''
     return isinstance(mail, queue_models.Mail) and mail or \
@@ -49,7 +51,8 @@ def get_mail_instance(mail):
 def get_message_instance(message):
     ''' Find `emailqueue.models.Message` instance
 
-        :param mail:`emailqueue.models.Message` instance or 'id' for instance
+        :param mail: :ref:`emailqueue.models.Message` instance
+                     or 'id' for instance
         :return: :ref:`emailqueue.models.Message` instance
     '''
     return isinstance(message, queue_models.Message) and message or \
@@ -57,7 +60,16 @@ def get_message_instance(message):
 
 
 @shared_task
-def send_mail(mail):
+def send_mail(mail, recipients=None):
+    '''  Send mail
+
+        :param mail:  :ref:`emailqueue.models.Mail` or id
+        :param recipients: List of adhoc recipients.
+
+                           If not specified,
+                           :ref:`emailqueue.models.Recipient` list is used.
+    '''
+
     mail = get_mail_instance(mail)
 
     server = models.Server.objects.filter(
@@ -67,59 +79,33 @@ def send_mail(mail):
         logger.debug("No Server for {0}".format(mail.sender.domain))
         return
 
-    logger.debug("Mail({0}) is sending {1} recipients".format(
-        mail.id, mail.recipient_set.active_set()))
+    recipients = recipients or mail.recipient_set.active_set()
 
-    for recipient in mail.recipient_set.active_set():
+    for recipient in recipients:
         if mail.delay():    # make this Mail pending state
             logger.info("Mail({0}) is delayed".format(mail.id))
             break
 
-        send_raw_message(
-            recipient.return_path,
-            [recipient.to.email],
-            recipient.create_message().as_string(),
-            server.backend)
-
-        recipient.sent_at = now()
-        recipient.save()
-
-        server.wait()
-
-
-@shared_task
-def send_mail_test(mail, recipients=None):
-    ''' recipents : list of email address '''
-    mail = get_mail_instance(mail)
-
-    server = models.Server.objects.filter(
-        domain=mail.sender.domain).first()
-
-    if not server:
-        logger.debug("No Server for {0}".format(mail.sender.domain))
-        return
-
-    recipients = recipients or [mail.sender.forward]
-
-    for recipient in recipients:
-
-        to = queue_models.MailAddress.objects.get_or_create(
-            email=recipient)[0]
-
-        return_path = utils.to_return_path(
-            'test', mail.sender.domain, mail.id, to.id)
+        if isinstance(recipient, basestring):
+            to = queue_models.MailAddress.objects.get_or_create(
+                email=recipient)[0]
+            return_path = utils.to_return_path(
+                'adhoc', mail.sender.domain, mail.id, to.id)
+        else:
+            to = recipient.to
+            return_path = recipient.return_path
 
         send_raw_message(
             return_path,
-            [recipient],
+            [to.email],
             mail.create_message(to).as_string(),
             server.backend)
 
+        if isinstance(recipient, queue_models.Recipient):
+            recipient.sent_at = now()
+            recipient.save()
 
-@shared_task
-def send_mail_all():
-    for mail in queue_models.Mail.objects.active_set():
-        send_mail(mail)
+        server.wait()
 
 
 @shared_task
@@ -127,10 +113,12 @@ def send_raw_message(
         return_path, recipients,
         raw_message, *args, **kwargs):
     '''
-        :param str return_path: the Envelope From address
-        :param list(str) recipients: the Envelope To address
-        :param str raw_message:
-            string expression of Python email.message.Message object
+    Send email using SMTP backend
+
+    :param str return_path: the Envelope From address
+    :param list(str) recipients: the Envelope To address
+    :param str raw_message:
+        string expression of Python :py:class:`email.message.Message` object
     '''
 
     # logger = current_task.get_logger()
@@ -154,15 +142,14 @@ def send_raw_message(
         send_raw_message.retry(exc=e)
 
 
-@task
+@shared_task
 def save_inbound(sender, recipient, raw_message):
     '''
-    Save `raw_message`(serialized email) to
-    `emailqueue.models.Message`
+    Save `raw_message` (serialized email) to  :ref:`emailqueue.models.Message`
 
-        :param sender: sender email address
-        :param recipient: recipient email address
-        :param raw_message: seriazlied email text
+    :param email sender: sender address
+    :param email recipient: recipient address
+    :param basestring raw_message: seriazlied email
     '''
     inbound = queue_models.Message.objects.create(
         sender=sender, recipient=recipient, raw_message=raw_message)
@@ -173,7 +160,10 @@ def save_inbound(sender, recipient, raw_message):
 
 @shared_task
 def forward(message):
-    ''' queue_models.Message '''
+    '''
+    Forward to inboud mail to out side.
+
+    :param message: :ref:`emailqueue.models.Message` '''
 
     message = get_message_instance(message)
     server = models.Server.objects.filter(
@@ -187,3 +177,9 @@ def forward(message):
 
     message.processed_at = now()
     message.save()
+
+
+@shared_task
+def send_mail_all():
+    for mail in queue_models.Mail.objects.active_set():
+        send_mail(mail)

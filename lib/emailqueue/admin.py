@@ -3,11 +3,15 @@ from django.apps import apps
 
 
 class RecipientAdmin(admin.ModelAdmin):
-    raw_id_fields = ['mail', ]
+    raw_id_fields = ['mail', 'to', ]
 
 
 class ReportAdmin(admin.ModelAdmin):
     raw_id_fields = ['address', 'mail', 'bounce', ]
+
+
+class MessageAdmin(admin.ModelAdmin):
+    date_hierarchy = 'created_at'
 
 
 def register(app_fullname, admins, ignore_models=[]):
