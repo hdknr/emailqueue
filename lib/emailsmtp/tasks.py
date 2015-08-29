@@ -17,7 +17,6 @@ from emailqueue import (
     utils,
     tasks as queue_tasks,
 )
-# import Mail, MailAddress, Message
 
 
 logger = get_task_logger('emailsmtp')
@@ -26,16 +25,30 @@ BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
 
 
 def make_eta(when):
-    ''' ETA time '''
+    ''' ETA(estimated time of arrival) time
+
+        :param when:  :py:class:`datetime.datetime`
+        :return: :py:class:`datetime.datetime` with timezone
+    '''
     return when.tzinfo and when or get_current_timezone().localize(when)
 
 
 def get_mail_instance(mail):
+    ''' Find `emailqueue.models.Mail` instance
+
+        :param mail:`emailqueue.models.Mail` instance or 'id' for instance
+        :return: :ref:`emailqueue.models.Mail` instance
+    '''
     return isinstance(mail, queue_models.Mail) and mail or \
         queue_models.Mail.objects.get(id=mail)
 
 
 def get_message_instance(message):
+    ''' Find `emailqueue.models.Message` instance
+
+        :param mail:`emailqueue.models.Message` instance or 'id' for instance
+        :return: :ref:`emailqueue.models.Message` instance
+    '''
     return isinstance(message, queue_models.Message) and message or \
         queue_models.Message.objects.get(id=message)
 
@@ -140,6 +153,14 @@ def send_raw_message(
 
 @task
 def save_inbound(sender, recipient, raw_message):
+    '''
+    Save `raw_message`(serialized email) to
+    `emailqueue.models.Message`
+
+        :param sender: sender email address
+        :param recipient: recipient email address
+        :param raw_message: seriazlied email text
+    '''
     inbound = queue_models.Message.objects.create(
         sender=sender, recipient=recipient, raw_message=raw_message)
 

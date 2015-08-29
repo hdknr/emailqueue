@@ -1,3 +1,5 @@
+''' Forms for emailsmtp
+'''
 from django import forms
 from django.conf import settings
 from django.contrib.admin.widgets import AdminSplitDateTime
@@ -27,14 +29,19 @@ def admin_media():
 
 
 class SendMailForm(forms.Form):
+    ''' Send Mail Form '''
+
     recipients = forms.CharField(
         required=False,
         label=_('Recipients'),
         widget=forms.Textarea,
     )
+
     is_test = forms.BooleanField(
         required=True, initial=True,
-        label=_('Is Testing Mail'),)
+        label=_('Is Testing Mail'),
+        help_text=_('Is Tesing Mail Help'),)
+    ''' Send as Testing(=True) or Live(=False) '''
 
     send_at = forms.SplitDateTimeField(
         required=False,
@@ -51,11 +58,11 @@ class SendMailForm(forms.Form):
             self.cleaned_data['recipients'], re.MULTILINE)
 
     def send_mail(self, mail_obj):
+        ''' Send a  :ref:`emailqueue.models.Mail` '''
         send_at = self.cleaned_data['send_at']
         is_test = self.cleaned_data['is_test']
         if is_test:
             if send_at:
-                print send_at
                 tasks.send_mail_test.apply_async(
                     [mail_obj.id, self.get_recipients()],
                     eta=tasks.make_eta(send_at))

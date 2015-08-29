@@ -1,18 +1,28 @@
 # -*- coding: utf-8 -*-
 '''
 
-mail.cf:
+mail.cf(define transport for accepting domains):
 
     ::
 
         default_transport=jail
 
-maser.cf:
+maser.cf(define transport handler script):
 
     ::
 
         jail unix  -   n    n   -   -   pipe
           flags=FDRq user=vagrant argv=/bin/inbound.sh $sender $recipient
+
+inbound.sh(save to Message models):
+
+    ::
+
+        #!/bin/sh
+        PY=/home/vagrant/.anyenv/envs/pyenv/versions/venv/bin/python
+        MN=/home/vagrant/projects/emailqueue/web/manage.py
+
+        $PY $MN empostfix bounce $1 $2
 
 Ubuntu:
 
@@ -50,6 +60,8 @@ class Command(Command):
         ]
 
         def run(self, params, **options):
+            ''' read stdin and save it to `emailqueue.models.Message`
+            '''
 
             if sys.stdin.isatty():
                 #: no stdin

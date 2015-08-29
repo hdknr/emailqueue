@@ -107,13 +107,14 @@ MIDDLEWARE_CLASSES += (
     'app.middleware.SettingsMiddleware',
 )
 
-# run_gunicorn requires LOGGING
-LOGGING = {
-    'version': 1,
-}
-
 # Celery
 try:
     from app.celery import *    # noqa
 except:
     CELERY_ALWAYS_EAGER = True
+
+# LOGGING
+try:
+    from app.logs import *      # noqa
+except:
+    LOGGING = {'version': 1, }

@@ -12,6 +12,12 @@ models
 .. toctree::
     :maxdepth: 2
 
+    tutorial
+
+    emailsmtp.tasks
+    emailsmtp.forms
+    emailsmtp.management
+
     models/emailqueue
     models/emailsmtp
     models/emailses
