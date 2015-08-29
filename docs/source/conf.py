@@ -365,3 +365,41 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+###
+
+
+# exlucdes
+exclude_patterns = [
+    'models/*.models.*.rst',
+    '*/include.*.rst',
+]
+todo_include_todos = True
+
+# Django Project
+SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+DOC_DIR = os.path.dirname(SRC_DIR)
+PRJ_DIR = os.path.join(os.path.dirname(DOC_DIR), 'web')
+sys.path.insert(0, PRJ_DIR)
+os.environ['DJANGO_SETTINGS_MODULE'] = 'app.settings'
+
+# ReadTheDocs Theme
+import sphinx_rtd_theme
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# http://docs.sphinx-users.jp/theming.html
+html_theme = 'bizstyle'
+
+
+# blockdiag
+extensions += ['sphinxcontrib.blockdiag']
+blockdiag_fontpath = '/usr/share/fonts/truetype/IPAfont00303/ipagp.ttf'
+
+
+def setup(app):
+    ''' SETUP '''
+    from django.core.wsgi import get_wsgi_application
+    get_wsgi_application()
+
+    from app.sphinx import process_docstring
+    # Register the docstring processor with sphinx
+    app.connect('autodoc-process-docstring', process_docstring)

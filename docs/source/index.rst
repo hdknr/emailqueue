@@ -6,11 +6,15 @@
 Welcome to emailqueue's documentation!
 ======================================
 
-Contents:
+models
+----------
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
+    models/emailqueue
+    models/emailsmtp
+    models/emailses
 
 
 Indices and tables
