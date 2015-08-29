@@ -23,3 +23,5 @@ class CircleMember(models.Model):
 
 class CircleLetter(Mail):
     circle = models.ForeignKey(Circle)
+    for_admin = models.BooleanField(default=True)
+    for_member = models.BooleanField(default=True)

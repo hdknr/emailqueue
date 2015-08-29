@@ -2,8 +2,6 @@
 '''
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.timezone import now
 from django import template
 from django.core import serializers
@@ -54,6 +52,10 @@ class MailAddress(BaseModel):
     bounced = models.IntegerField(
         _('Bounced Count'),
         help_text=_('Bounced Count Help'), default=0)
+
+    enabled = models.BooleanField(
+        _('Enabled Address'), help_text=_('Enabled Address Help'),
+        default=True)
 
     class Meta:
         verbose_name = _('Mail Address')
@@ -206,18 +208,18 @@ class Mail(BaseModel):
     body = models.TextField(
         _('Mail Body'), help_text=_('Mail Body Help'), )
 
-    content_type = models.ForeignKey(
-        ContentType, null=True, blank=True)
-    object_id = models.PositiveIntegerField(null=True, blank=True)
-    ctx = GenericForeignKey('content_type', 'object_id')
-
-    enabled = models.BooleanField(
-        _('Enabled'), help_text=_('Enabled'), default=False)
+    ctx = models.TextField(
+        _('Context Data'), help_text=_('Context Data Help'),
+        default=None, null=True, blank=True)
 
     due_at = models.DateTimeField(
         _('Due At'), help_text=_('Due At'),
         null=True, blank=True, default=None)
 
+#     sent_at = models.DateTimeField(
+#         _('Sent At'), help_text=_('Sent At'),
+#         null=True, blank=True, default=None)
+#
     sleep_from = models.TimeField(
         _('Sleep From'), help_text=_('Sleep From'),
         null=True, blank=True, default=None)
@@ -304,7 +306,7 @@ class Mail(BaseModel):
         return template.Template(self.body).render(
             template.Context(dict(
                 to=mail_address,
-                ctx=self.ctx,
+                ctx={},         # TODO: deserialize Json
             )))
 
     def create_message(self, mail_address, encoding="utf-8",):

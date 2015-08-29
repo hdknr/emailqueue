@@ -64,10 +64,6 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
-LANGUAGE_CODE = 'ja'
-
-TIME_ZONE = 'Asia/Tokyo'
-
 USE_I18N = True
 
 USE_L10N = True
@@ -81,15 +77,20 @@ USE_TZ = True
 STATIC_URL = '/static/'
 ############################################################
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+LANGUAGE_CODE = 'ja'
+TIME_ZONE = 'Asia/Tokyo'
+STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
 
 INSTALLED_APPS += (
-    'emailqueue',
+    'app',
     'emailsmtp',
+    'emailqueue',
     'emailses',
     'gunicorn',     # python manage.py run_gunicorn
     'alumni',
     'circles',
+    'djcelery',
+    'kombu.transport.django',
 )
 
 DATABASES['default'] = {
@@ -110,10 +111,9 @@ MIDDLEWARE_CLASSES += (
 LOGGING = {
     'version': 1,
 }
-######
-#
-BROKER_URL = 'amqp://emailqueue:emailqueue@localhost:5672/emailqueue'
-INSTALLED_APPS += (
-    'djcelery',
-    'kombu.transport.django',
-)
+
+# Celery
+try:
+    from app.celery import *    # noqa
+except:
+    CELERY_ALWAYS_EAGER = True
