@@ -216,10 +216,6 @@ class Mail(BaseModel):
         _('Due At'), help_text=_('Due At'),
         null=True, blank=True, default=None)
 
-#     sent_at = models.DateTimeField(
-#         _('Sent At'), help_text=_('Sent At'),
-#         null=True, blank=True, default=None)
-#
     sleep_from = models.TimeField(
         _('Sleep From'), help_text=_('Sleep From'),
         null=True, blank=True, default=None)
