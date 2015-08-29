@@ -53,6 +53,7 @@ class SendMailForm(forms.Form):
         return admin_media()
 
     def get_recipients(self):
+        ''' <textarea> may include en email for each line. '''
         return re.findall(
             r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
             self.cleaned_data['recipients'], re.MULTILINE)
@@ -60,11 +61,9 @@ class SendMailForm(forms.Form):
     def send_mail(self, mail_obj):
         ''' Send a  :ref:`emailqueue.models.Mail` '''
         send_at = self.cleaned_data['send_at']
-        is_test = self.cleaned_data['is_test']
-        if is_test:
-            if send_at:
-                tasks.send_mail_test.apply_async(
-                    [mail_obj.id, self.get_recipients()],
-                    eta=tasks.make_eta(send_at))
-            else:
-                tasks.send_mail_test(mail_obj, self.get_recipients())
+        # is_test = self.cleaned_data['is_test']
+
+        # if send_at is None, send now. Otherwise, later.
+        tasks.send_mail_test.apply_async(
+            [mail_obj.id, self.get_recipients()],
+            eta=tasks.make_eta(send_at))

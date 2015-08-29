@@ -30,7 +30,10 @@ def make_eta(when):
         :param when:  :py:class:`datetime.datetime`
         :return: :py:class:`datetime.datetime` with timezone
     '''
-    return when.tzinfo and when or get_current_timezone().localize(when)
+    if when:
+        return when.tzinfo and when or get_current_timezone().localize(when)
+    else:
+        return when
 
 
 def get_mail_instance(mail):
