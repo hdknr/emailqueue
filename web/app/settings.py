@@ -115,7 +115,7 @@ except:
 
 # LOGGING
 try:
-    # from app.logs import *      # noqa
-    pass
+    from app.logs import *      # noqa
+    # pass
 except:
     LOGGING = {'version': 1, }
