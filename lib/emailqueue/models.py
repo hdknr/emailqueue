@@ -42,6 +42,26 @@ class BaseModel(models.Model):
             "json", [self], ensure_ascii=False, indent=4)
 
 
+class Server(BaseModel):
+    name = models.CharField(
+        _('Mail Service Name'), unique=True, max_length=50)
+
+    domain = models.CharField(
+        _('Mail Domain Name'), unique=True, max_length=50)
+
+    backend = models.CharField(
+        _('Mail Backend'), max_length=100,
+        default='django.core.mail.backends.smtp.EmailBackend',)
+
+    forwarder = models.CharField(
+        _('Mail Forwarder'),  max_length=100,
+        default='emailsmtp.tasks.forward',)
+
+    class Meta:
+        verbose_name = _('Server')
+        verbose_name_plural = _('Server')
+
+
 class MailAddress(BaseModel):
     ''' Mail Address
     '''

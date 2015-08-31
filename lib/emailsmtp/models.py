@@ -3,20 +3,10 @@ from django.utils.translation import ugettext_lazy as _
 
 import time
 
-from emailqueue.models import BaseModel
+from emailqueue.models import BaseModel, Server as MailServer
 
 
-class Server(BaseModel):
-    name = models.CharField(
-        _('Mail Service Name'), unique=True, max_length=50)
-
-    domain = models.CharField(
-        _('Mail Domain Name'), unique=True, max_length=50)
-
-    backend = models.CharField(
-        _('Mail Backend'), max_length=100,
-        default='django.core.mail.backends.smtp.EmailBackend',)
-
+class Server(MailServer):
     wait_every = models.IntegerField(
         _('Wait sending for every count'),
         help_text=_('Wait sending for every count help'),
