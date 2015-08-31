@@ -3,6 +3,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
+# from django.utils.encoding import force_text
+from django.utils.encoding import smart_str
 from django import template
 from django.core import serializers
 
@@ -60,6 +62,9 @@ class Server(BaseModel):
     class Meta:
         verbose_name = _('Server')
         verbose_name_plural = _('Server')
+
+    def __unicode__(self):
+        return self.name
 
 
 class MailAddress(BaseModel):
@@ -413,6 +418,9 @@ class Attachment(BaseModel):
 
 class Message(BaseModel):
     ''' Raw Message '''
+    server = models.ForeignKey(
+        Server, verbose_name=_('Recipient Server'),
+        default=None, blank=True, null=True)
 
     sender = models.EmailField(
         _('Sender'), help_text=_('Sender Help'),  max_length=100,
@@ -452,7 +460,9 @@ class Message(BaseModel):
         def _cached():
             # cache message_from_string(self.raw_message)
             self._mailobject = message_from_string(
-                self.raw_message.encode('utf8'))
+                smart_str(self.raw_message))
+
+            # self.raw_message.encode('utf8'))
             return self._mailobject
 
         return getattr(self, '_mailobject', _cached())
@@ -463,6 +473,7 @@ class Message(BaseModel):
 
     @property
     def dsn(self):
+        ''' DSN object if a Message has something wrong. '''
         def _cached():
             if self.is_multipart and isinstance(
                     self.mailobject.get_payload(), list):
@@ -492,6 +503,9 @@ class Message(BaseModel):
         return utils.from_return_path(self.recipient)
 
     def get_handler(self):
+        ''' Email Hanlders of Message object
+
+        '''
         if self.dsn:
             return utils.from_return_path(self.recipient)
         else:

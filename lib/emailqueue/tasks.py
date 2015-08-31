@@ -15,7 +15,15 @@ def get_message_instance(message):
         models.Message.objects.get(id=message)
 
 
-def forward_message(message, forwarder):
+def forward_message(message, forwarder=None):
+    ''' Forward message
+
+    :param Message message: `emailqueue.models.Message`
+    :param string forwarder: Celery forwarding task name
+
+    '''
+    forwarder = forwarder or message.forwarder
+
     if not forwarder:
         return
 
@@ -59,6 +67,13 @@ def error_fwd(message, handler, domain, args, **kwargs):
 
 
 def process_direct(message, forwarder=None, **kwargs):
+    ''' Inbounce message is sent directory by a Sender
+
+    :param Message message: :ref:`emailqueue.models.Message`
+
+    - if recipient is defined as :ref:`emailqueue.models.Rely`,
+      this Message is forwarded to `relay.address` .
+    '''
     relay = models.Relay.objects.create_from_message(message)
 
     if relay:
@@ -78,6 +93,12 @@ def handle_default(message, **kwargs):
 
 @shared_task
 def process_message(message, forwarder=None):
+    ''' Inbounde Message handler
+
+    - call one of handler in ['direct', 'relay', 'fwd', 'mail', 'test', ]
+
+    :param Message message: `emailqueue.models.Message` instance or `id`
+    '''
     message = get_message_instance(message)
     params = message.get_handler()
 

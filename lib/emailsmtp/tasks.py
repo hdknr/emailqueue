@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.core.mail import get_connection
 from django.utils.timezone import now, get_current_timezone
+from django.utils.encoding import smart_str
 
 # from celery import current_task
 from celery.utils.log import get_task_logger
@@ -40,9 +41,9 @@ def make_eta(when):
 def get_mail_instance(mail):
     ''' Find `emailqueue.models.Mail` instance
 
-        :param mail: :ref:`emailqueue.models.Mail` instance
-                     or 'id' for instance
-        :return: :ref:`emailqueue.models.Mail` instance
+    :param mail: :ref:`emailqueue.models.Mail` instance
+                  or 'id' for instance
+    :return: :ref:`emailqueue.models.Mail` instance
     '''
     return isinstance(mail, queue_models.Mail) and mail or \
         queue_models.Mail.objects.get(id=mail)
@@ -63,11 +64,11 @@ def get_message_instance(message):
 def send_mail(mail, recipients=None):
     '''  Send mail
 
-        :param mail:  :ref:`emailqueue.models.Mail` or id
-        :param recipients: List of adhoc recipients.
+    :param mail:  :ref:`emailqueue.models.Mail` or id
+    :param recipients: List of adhoc recipients.
 
-                           If not specified,
-                           :ref:`emailqueue.models.Recipient` list is used.
+                       If not specified,
+                       :ref:`emailqueue.models.Recipient` list is used.
     '''
 
     mail = get_mail_instance(mail)
@@ -126,7 +127,7 @@ def send_raw_message(
         conn = get_connection(backend=BACKEND)
         conn.open()     # django.core.mail.backends.smtp.EmailBackend
         conn.connection.sendmail(
-            return_path, recipients, raw_message)
+            return_path, recipients, smart_str(raw_message))
 
         logger.debug(
             "send_email_in_string:Successfully sent email message to %r.",
@@ -146,16 +147,29 @@ def send_raw_message(
 def save_inbound(sender, recipient, raw_message):
     '''
     Save `raw_message` (serialized email) to  :ref:`emailqueue.models.Message`
+    This is called by bounce hander defined in SMTP server
+    (ex. transport defined in Postfix master.cf).
+
+    1. Create a new `emailqueue.models.Message`.
+    2. Give it to `emailqueue.tasks.process_message` task.
 
     :param email sender: sender address
     :param email recipient: recipient address
     :param basestring raw_message: seriazlied email
     '''
-    inbound = queue_models.Message.objects.create(
-        sender=sender, recipient=recipient, raw_message=raw_message)
 
-    queue_tasks.process_message(
-        inbound, forwarder='emailsmtp.tasks.forward')
+    try:
+        server = queue_models.Server.objects.filter(
+            domain=recipient.split('@')[1]).first()
+        inbound = queue_models.Message.objects.create(
+            server=server,
+            sender=sender, recipient=recipient, raw_message=raw_message)
+
+        queue_tasks.process_message(
+            inbound, forwarder='emailsmtp.tasks.forward')
+    except:
+        with open('/tmp/save_inbound.txt', 'w') as out:
+            out.write(traceback.format_exc())
 
 
 @shared_task
@@ -163,7 +177,8 @@ def forward(message):
     '''
     Forward to inboud mail to out side.
 
-    :param message: :ref:`emailqueue.models.Message` '''
+    :param Message message: :ref:`emailqueue.models.Message`
+    '''
 
     message = get_message_instance(message)
     server = models.Server.objects.filter(
