@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.apps import apps
+from django.utils.translation import ugettext_lazy as _
 
 
 class RecipientAdmin(admin.ModelAdmin):
@@ -12,6 +13,13 @@ class ReportAdmin(admin.ModelAdmin):
 
 class MessageAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
+    actions = ['process_message', ]
+
+    def process_message(self, request, queryset):
+        for instance in queryset:
+            instance.server.handler.process_message(instance)
+
+    process_message.short_description = _('Process Message')
 
 
 def register(app_fullname, admins, ignore_models=[]):

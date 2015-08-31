@@ -2,7 +2,7 @@
 
 from pycommand.djcommand import Command as PyCommand, SubCommand
 # from django.utils.translation import ugettext as _
-from emailqueue import tasks, models
+from emailqueue import models
 # import sys
 
 
@@ -17,8 +17,21 @@ class Command(PyCommand):
         ]
 
         def run(self, params, **options):
-            tasks.process_message(
-                models.Message.objects.get(id=params.id[0]))
+            for message in models.Message.objects.filter(id__in=params.id):
+                message.server.handler.process_message(message)
+
+    class SendMail(SubCommand):
+        name = "send_mail"
+        description = "Send Mail"
+        args = [
+            (('id',), dict(nargs=1, type=int, help="Mail ID")),
+            (('recipients',), dict(nargs='*', help="Recipients")),
+        ]
+
+        def run(self, params, **options):
+            mail = models.Mail.objects.get(id=params.id[0])
+            mail.sender.server.handler.send_mail(
+                mail, recipients=params.recipients)
 
     class ActiveMailList(SubCommand):
         name = "list_active_mail"

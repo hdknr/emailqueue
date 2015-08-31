@@ -192,3 +192,23 @@ def forward(message):
 def send_mail_all():
     for mail in queue_models.Mail.objects.active_set():
         send_mail(mail)
+
+
+class Handler(queue_tasks.Handler):
+    '''SMTP Handler)
+    '''
+    def send_mail(self, mail, recipients=None):
+        '''SMTP: send  Mail
+
+        :param Mail mail: :ref:`emailqueue.models.Mail` instance
+        :param list(address) recipients: adhoc recipients or None
+             If None, :ref:`emailqueue.models.Recipient` of this Mail are used.
+        '''
+
+        send_mail(mail, recipients=recipients)
+
+    def forward_message(self, message):
+        '''SMTP:Forward a Message
+        :param Mail mail: :ref:`emailqueue.models.Mail` instance
+        '''
+        forward(message)

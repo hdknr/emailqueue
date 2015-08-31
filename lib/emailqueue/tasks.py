@@ -18,25 +18,6 @@ def get_message_instance(message):
         models.Message.objects.get(id=message)
 
 
-def forward_message(message, forwarder=None):
-    ''' Forward message
-
-    :param Message message: `emailqueue.models.Message`
-    :param string forwarder: Celery forwarding task name
-
-    '''
-    forwarder = forwarder or (message.server and message.server.forwarder)
-
-    if not forwarder:
-        logger.error('no forwarder is given.')
-        return
-
-    from celery import current_app
-    current_app.send_task(
-        forwarder,
-        args=[message.id, ])
-
-
 def error_mail(message, prefix, domain, args, **kwargs):
     '''This message was error '''
     # TODO:
@@ -58,7 +39,7 @@ def error_relay(message, handler, domain, args,
         message.forward_recipient = relay.sender.email
         message.save()
 
-        forward_message(message, forwarder)
+        message.server.handler.forward_message(message)
 
 
 def error_test(message, prefix, domain, args, **kwargs):
@@ -89,7 +70,7 @@ def process_direct(message, forwarder=None, **kwargs):
         message.forward_sender = relay.address
         message.forward_recipient = relay.postbox.forward
         message.save()
-        forward_message(message, forwarder)
+        message.server.handler.forward_message(message)
 
     # TODO: check postbox for command execution
 
@@ -101,7 +82,7 @@ def handle_default(message, **kwargs):
 
 
 @shared_task
-def process_message(message, forwarder=None):
+def process_message(message):
     ''' Inbounde Message handler
 
     - call one of handler in ['direct', 'relay', 'fwd', 'mail', 'test', ]
@@ -117,4 +98,25 @@ def process_message(message, forwarder=None):
      'mail': error_mail,
      'test': error_test,
      }.get(params['handler'], handle_default)(
-        message=message, forwarder=forwarder, **params)
+        message=message, **params)
+
+
+class Handler(object):
+    '''Abstract Task Handler'''
+
+    def send_mmail(self, mail):
+        '''Send Message
+
+        :param Mail mail: :ref:`emailqueue.models.Mail`
+        '''
+        raise NotImplementedError
+
+    def forward_message(self, message):
+        '''Forward Message
+
+        :param Mail mail: :ref:`emailqueue.models.Mail`
+        '''
+        raise NotImplementedError
+
+    def process_message(self, message):
+        process_message(message)

@@ -8,6 +8,7 @@ from django.utils.encoding import smart_str
 from django import template
 from django.core import serializers
 
+import pydoc
 import uuid
 import os
 from datetime import timedelta
@@ -56,9 +57,9 @@ class Server(BaseModel):
         _('Mail Backend'), max_length=100,
         default='django.core.mail.backends.smtp.EmailBackend',)
 
-    forwarder = models.CharField(
-        _('Mail Forwarder'),  max_length=100,
-        default='emailsmtp.tasks.forward',)
+    handler_class = models.CharField(
+        _('Service Handler'), max_length=200,
+        default='emailsmtp.tasks.Handler',)
 
     settings = models.TextField(
         _('Mail Server Settings'), null=True, default='{}', blank=True)
@@ -90,6 +91,12 @@ class Server(BaseModel):
             self._every = 0
             if self.wait_every > 0:
                 time.sleep(self.wait_ms / 1000.0)
+
+    @property
+    def handler(self):
+        def create_handler():
+            self._handler = pydoc.locate(self.handler_class)()
+        return getattr(self, '_handler', create_handler())
 
 
 class MailAddress(BaseModel):
