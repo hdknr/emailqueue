@@ -251,6 +251,11 @@ Message:Message
          - datetime
          - 
 
+    *    - server
+         - Recipient Server
+         - integer
+         - 
+
     *    - sender
          - 送信者
          - varchar(100)
@@ -484,6 +489,54 @@ Report:Report
          - DSN Status Help
 
 .. include:: emailqueue.models.Report.rst
+
+.. _emailqueue.models.Server:
+
+Server:Server
+==========================
+
+.. autoclass:: emailqueue.models.Server
+    :members:
+
+
+.. list-table::
+
+    *    - id
+         - ID
+         - integer AUTO_INCREMENT
+         - 
+
+    *    - created_at
+         - 作成日時
+         - datetime
+         - 
+
+    *    - updated_at
+         - 更新日時
+         - datetime
+         - 
+
+    *    - name
+         - メールサービス名
+         - varchar(50)
+         - 
+
+    *    - domain
+         - ドメイン名
+         - varchar(50)
+         - 
+
+    *    - backend
+         - バックエンド
+         - varchar(100)
+         - 
+
+    *    - forwarder
+         - Mail Forwarder
+         - varchar(100)
+         - 
+
+.. include:: emailqueue.models.Server.rst
 
 
 .. _emailqueue.models.er:

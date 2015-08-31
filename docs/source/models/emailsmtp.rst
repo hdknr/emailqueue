@@ -46,6 +46,16 @@ Server:SMTPサーバー
          - varchar(100)
          - 
 
+    *    - forwarder
+         - Mail Forwarder
+         - varchar(100)
+         - 
+
+    *    - server_ptr
+         - server ptr
+         - integer
+         - 
+
     *    - wait_every
          - 送信ごとの待ち時間
          - integer

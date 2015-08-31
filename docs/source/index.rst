@@ -14,6 +14,9 @@ models
 
     tutorial
 
+    emailqueue.tasks
+    emailqueue.utils
+
     emailsmtp.tasks
     emailsmtp.forms
     emailsmtp.management
@@ -22,6 +25,7 @@ models
     models/emailsmtp
     models/emailses
 
+    terms
 
 Indices and tables
 ==================
