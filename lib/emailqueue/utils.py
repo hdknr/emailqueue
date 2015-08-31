@@ -14,6 +14,16 @@ def to_raw_return_path(handler, domain, *args):
 
 
 def from_raw_return_path(address):
+    '''Parse parameter fomm actual email address.
+
+    :param str address: email address
+    :return dict:
+
+    Address Format::
+
+        {{ handler_name }}_{{arg0}}_{{arg1}....@{{ domain }}
+
+    '''
     m = re.search(
         r"^(?P<handler>[^_]+)_(?P<args>[^@]+)@(?P<domain>.+)$",
         address)
@@ -36,6 +46,16 @@ def to_return_path(handler, domain, *args):
 
 
 def from_return_path(return_path):
+    '''Parse parameter from :term:`Return_Path` address
+
+    Return_Path :  R{{ hash_code}}_{{ actual_address }}
+
+    :param str return_path: Return_Path address
+    :return dict: { 'hander': 'handler_name', 'args': [arg0, arg1,..], }
+
+    - if hash code is verified, deligate  to `from_raw_return_path` function
+
+    '''
     m = re.search(r"^R(?P<code>[^_]+)_(?P<address>.+)", return_path)
     m = m and m.groupdict() or {}
     address = m.get('address', '')

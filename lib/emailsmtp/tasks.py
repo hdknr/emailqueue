@@ -6,7 +6,6 @@ from django.utils.timezone import now, get_current_timezone
 from django.utils.encoding import smart_str
 
 # from celery import current_task
-from celery.utils.log import get_task_logger
 from celery import shared_task
 
 
@@ -20,8 +19,9 @@ from emailqueue import (
     tasks as queue_tasks,
 )
 
+import logging
+logger = logging.getLogger('emailsmtp')
 
-logger = get_task_logger('emailsmtp')
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
                   'django.core.mail.backends.smtp.EmailBackend')
 
@@ -148,7 +148,7 @@ def save_inbound(sender, recipient, raw_message):
     '''
     Save `raw_message` (serialized email) to  :ref:`emailqueue.models.Message`
     This is called by bounce hander defined in SMTP server
-    (ex. transport defined in Postfix master.cf).
+    (ex. transport defined in Postfix :ref:`master.cf`).
 
     1. Create a new `emailqueue.models.Message`.
     2. Give it to `emailqueue.tasks.process_message` task.
@@ -165,11 +165,9 @@ def save_inbound(sender, recipient, raw_message):
             server=server,
             sender=sender, recipient=recipient, raw_message=raw_message)
 
-        queue_tasks.process_message(
-            inbound, forwarder='emailsmtp.tasks.forward')
+        queue_tasks.process_message(inbound)
     except:
-        with open('/tmp/save_inbound.txt', 'w') as out:
-            out.write(traceback.format_exc())
+        logger.error(traceback.format_exc())
 
 
 @shared_task
