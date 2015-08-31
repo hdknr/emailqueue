@@ -2,37 +2,23 @@
 
 from pycommand.djcommand import Command as PyCommand, SubCommand
 # from django.utils.translation import ugettext as _
-from emailqueue.models import (
-    Service,
-)
+from emailqueue import tasks, models
 # import sys
 
 
 class Command(PyCommand):
     managers = ['manage.py', ]
 
-    class ServiceList(SubCommand):
-        name = "list_service"
-        description = "List Servcices"
+    class ProcessMessage(SubCommand):
+        name = "process_message"
+        description = "Process Message"
         args = [
+            (('id',), dict(nargs=1, type=int, help="Message ID")),
         ]
 
         def run(self, params, **options):
-            for service in Service.objects.all():
-                print service.id, ":", service.service.name, service.key
-
-    class AddressVerify(SubCommand):
-        name = "verify_address"
-        description = "Verify an Email Address"
-        args = [
-            (('id',), dict(nargs=1, type=int, help="Service ID")),
-            (('address',), dict(nargs='+', help="Email Address")),
-        ]
-
-        def run(self, params, **options):
-            service = Service.objects.get(id=params.id[0])
-            for addr in params.address:
-                service.service.verify(addr)
+            tasks.process_message(
+                models.Message.objects.get(id=params.id[0]))
 
     class ActiveMailList(SubCommand):
         name = "list_active_mail"
