@@ -3,7 +3,7 @@
 
 {% block object-tools-items %}
 {% if object_id %}
-  <li><a href="{% url 'emailsmtp_send_mail' id=object_id %}">{% trans 'Send Test Mail' %}</a></li>
+  <li><a href="{% url 'emailqueue_send_mail' id=object_id %}">{% trans 'Send Test Mail' %}</a></li>
 {% endif %}
 {{ block.super }}
 {% endblock %}

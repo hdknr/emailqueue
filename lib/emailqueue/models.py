@@ -127,7 +127,6 @@ class Postbox(BaseModel):
     '''
     server = models.ForeignKey(
         Server, verbose_name=_('Sending Server'),)
-    #        null=True, default=None, blank=True)
 
     address = models.EmailField(
         _('Postbox Address'), help_text=_('Postbox Address Help'),
@@ -275,6 +274,10 @@ class Mail(BaseModel):
 
     due_at = models.DateTimeField(
         _('Due At'), help_text=_('Due At'),
+        null=True, blank=True, default=None)
+
+    sent_at = models.DateTimeField(
+        _('Sent At'), help_text=_('Sent At'),
         null=True, blank=True, default=None)
 
     sleep_from = models.TimeField(

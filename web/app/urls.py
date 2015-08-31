@@ -10,6 +10,6 @@ urlpatterns = patterns(
     # url(r'^blog/', include('blog.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^mail/smtp/', include('emailsmtp.urls')),
+    url(r'^emailqueue/', include('emailqueue.urls')),
     url(r'^docs/', include('docs.urls')),
 )

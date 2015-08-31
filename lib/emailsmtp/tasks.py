@@ -205,7 +205,9 @@ class Handler(queue_tasks.Handler):
              If None, :ref:`emailqueue.models.Recipient` of this Mail are used.
         '''
 
-        send_mail(mail, recipients=recipients)
+        send_mail.apply_async(
+            args=[mail.id, recipients],
+            eta=make_eta(mail.due_at))
 
     def forward_message(self, message):
         '''SMTP:Forward a Message
