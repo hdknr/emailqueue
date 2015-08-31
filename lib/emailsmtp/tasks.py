@@ -1,5 +1,6 @@
 ''' Tasks for emailsmtp
 '''
+
 from django.conf import settings
 from django.core.mail import get_connection
 from django.utils.timezone import now, get_current_timezone
@@ -10,8 +11,6 @@ from celery import shared_task
 
 
 import traceback
-
-import models
 
 from emailqueue import (
     models as queue_models,
@@ -73,9 +72,7 @@ def send_mail(mail, recipients=None):
 
     mail = get_mail_instance(mail)
 
-    server = models.Server.objects.filter(
-        domain=mail.sender.domain).first()
-
+    server = mail.sender.server
     if not server:
         logger.debug("No Server for {0}".format(mail.sender.domain))
         return
@@ -122,7 +119,6 @@ def send_raw_message(
         string expression of Python :py:class:`email.message.Message` object
     '''
 
-    # logger = current_task.get_logger()
     try:
         conn = get_connection(backend=BACKEND)
         conn.open()     # django.core.mail.backends.smtp.EmailBackend
@@ -179,7 +175,7 @@ def forward(message):
     '''
 
     message = get_message_instance(message)
-    server = models.Server.objects.filter(
+    server = queue_models.Server.objects.filter(
         domain=message.forward_sender.split('@')[1]).first()
 
     send_raw_message(

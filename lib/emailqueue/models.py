@@ -13,6 +13,7 @@ import os
 from datetime import timedelta
 from email import Charset,  message_from_string
 from email.mime.text import MIMEText
+import time
 
 import utils
 
@@ -59,12 +60,36 @@ class Server(BaseModel):
         _('Mail Forwarder'),  max_length=100,
         default='emailsmtp.tasks.forward',)
 
+    settings = models.TextField(
+        _('Mail Server Settings'), null=True, default='{}', blank=True)
+
+    wait_every = models.IntegerField(
+        _('Wait sending for every count'),
+        help_text=_('Wait sending for every count help'),
+        default=0)
+
+    wait_ms = models.IntegerField(
+        _('Wait milliseconds'),
+        help_text=_('Wait milliseconds help'),
+        default=0)
+
     class Meta:
         verbose_name = _('Server')
         verbose_name_plural = _('Server')
 
+    def __init__(self, *args, **kwargs):
+        super(Server, self).__init__(*args, **kwargs)
+        self._every = 0
+
     def __unicode__(self):
         return self.name
+
+    def wait(self):
+        self._every = self._every + 1
+        if self.wait_every < self._every:
+            self._every = 0
+            if self.wait_every > 0:
+                time.sleep(self.wait_ms / 1000.0)
 
 
 class MailAddress(BaseModel):
@@ -93,6 +118,10 @@ class MailAddress(BaseModel):
 class Postbox(BaseModel):
     ''' Mail Forwarding Definition
     '''
+    server = models.ForeignKey(
+        Server, verbose_name=_('Sending Server'),)
+    #        null=True, default=None, blank=True)
+
     address = models.EmailField(
         _('Postbox Address'), help_text=_('Postbox Address Help'),
         max_length=50)
