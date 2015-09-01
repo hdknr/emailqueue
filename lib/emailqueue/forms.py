@@ -7,6 +7,8 @@ from django.contrib.admin.templatetags.admin_static import static
 from django.utils.translation import (
     ugettext_lazy as _,
 )
+from django.utils.timezone import now
+
 import re
 
 
@@ -41,7 +43,7 @@ class SendMailForm(forms.Form):
         help_text=_('Is Tesing Mail Help'),)
     ''' Send as Testing(=True) or Live(=False) '''
 
-    send_at = forms.SplitDateTimeField(
+    due_at = forms.SplitDateTimeField(
         required=False,
         label=_('Scheduled DateTime to send'),
         widget=AdminSplitDateTime,)
@@ -58,9 +60,9 @@ class SendMailForm(forms.Form):
 
     def send_mail(self, mail_obj):
         ''' Send a  :ref:`emailqueue.models.Mail` '''
-        # send_at = self.cleaned_data['send_at']
+        due_at = self.cleaned_data['due_at'] or now()
         # is_test = self.cleaned_data['is_test']
 
         # if send_at is None, send now. Otherwise, later.
         mail_obj.sender.server.handler.send_mail(
-            mail_obj, self.get_recipients())
+            mail_obj, self.get_recipients(), due_at)

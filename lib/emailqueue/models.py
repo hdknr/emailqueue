@@ -164,6 +164,8 @@ class Postbox(BaseModel):
 
 class RelayQuerySet(models.QuerySet):
     def create_from_message(self, message):
+        ''' Create a Relay for Message '''
+
         postbox = Postbox.objects.filter(address=message.recipient).first()
         if not postbox:
             return None
@@ -200,7 +202,8 @@ class Relay(BaseModel):
 
     sender = models.ForeignKey(
         MailAddress,
-        verbose_name=_('Sedner Address'), help_text=_('Sender Address Help'))
+        verbose_name=_('Sedner Address'),
+        help_text=_('Sender Address Help'))
 
     is_spammer = models.BooleanField(
         _('Is Spammer'), default=False)
@@ -558,6 +561,11 @@ class Message(BaseModel):
         address = utils.to_return_path(
             "fwd", domain, str(self.id), )
         return address
+
+    def process_message(self):
+        ''' Process this Message '''
+        if self.server and self.server.handler:
+            self.server.handler.process_message(self)
 
 
 class ReportQuerySet(models.QuerySet):

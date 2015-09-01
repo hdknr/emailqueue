@@ -104,19 +104,19 @@ def process_message(message):
 class Handler(object):
     '''Abstract Task Handler'''
 
-    def send_mmail(self, mail):
+    def send_mmail(self, mail, recipients=None, *args, **kwargs):
         '''Send Message
 
         :param Mail mail: :ref:`emailqueue.models.Mail`
         '''
         raise NotImplementedError
 
-    def forward_message(self, message):
+    def process_message(self, message, *args, **kwargs):
+        process_message(message)
+
+    def forward_message(self, message, *args, **kwargs):
         '''Forward Message
 
         :param Mail mail: :ref:`emailqueue.models.Mail`
         '''
         raise NotImplementedError
-
-    def process_message(self, message):
-        process_message(message)

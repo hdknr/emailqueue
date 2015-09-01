@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.mail import get_connection
 from django.utils.timezone import now, get_current_timezone
 from django.utils.encoding import smart_str
+from django.core.mail.backends.smtp import EmailBackend
 
 # from celery import current_task
 from celery import shared_task
@@ -14,15 +15,14 @@ import traceback
 
 from emailqueue import (
     models as queue_models,
-    utils,
     tasks as queue_tasks,
+    utils,
 )
 
 import logging
 logger = logging.getLogger('emailsmtp')
 
-BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND',
-                  'django.core.mail.backends.smtp.EmailBackend')
+BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND', settings.EMAIL_BACKEND)
 
 
 def make_eta(when):
@@ -69,7 +69,6 @@ def send_mail(mail, recipients=None):
                        If not specified,
                        :ref:`emailqueue.models.Recipient` list is used.
     '''
-
     mail = get_mail_instance(mail)
 
     server = mail.sender.server
@@ -121,13 +120,13 @@ def send_raw_message(
 
     try:
         conn = get_connection(backend=BACKEND)
-        conn.open()     # django.core.mail.backends.smtp.EmailBackend
-        conn.connection.sendmail(
-            return_path, recipients, smart_str(raw_message))
-
-        logger.debug(
-            "send_email_in_string:Successfully sent email message to %r.",
-            recipients)
+        if conn and isinstance(conn, EmailBackend):
+            conn.open()     # django.core.mail.backends.smtp.EmailBackend
+            conn.connection.sendmail(
+                return_path, recipients, smart_str(raw_message))
+        else:
+            store_raw_message(
+                return_path, recipients, raw_message, *args, **kwargs)
 
     except Exception, e:
         # catching all exceptions b/c it could be any number of things
@@ -137,6 +136,31 @@ def send_raw_message(
             "{0}:Failed to send email message to {1}, retrying.".format(
                 'send_email_instring', recipients))
         send_raw_message.retry(exc=e)
+
+
+@shared_task
+def store_raw_message(
+        return_path, recipients,
+        raw_message, *args, **kwargs):
+    '''
+    Store email to :ref:`emailqueue.models.Message` for DEBUG
+
+    :param str return_path: the Envelope From address
+    :param list(str) recipients: the Envelope To address
+    :param str raw_message:
+        string expression of Python :py:class:`email.message.Message` object
+    '''
+    for recipient in recipients:
+        user, domain = recipient.split('@')
+        try:
+            server = queue_models.Server.objects.filter(domain=domain).first()
+            queue_models.Message.objects.create(
+                server=server,
+                sender=return_path,
+                recipient=recipient,
+                raw_message=raw_message)
+        except:
+            logger.debug(traceback.format_exc())
 
 
 @shared_task
@@ -188,26 +212,25 @@ def forward(message):
     message.save()
 
 
-@shared_task
-def send_mail_all():
-    for mail in queue_models.Mail.objects.active_set():
-        send_mail(mail)
+# @shared_task
+# def send_mail_all():
+#     for mail in queue_models.Mail.objects.active_set():
+#         send_mail(mail)
 
 
 class Handler(queue_tasks.Handler):
     '''SMTP Handler)
     '''
-    def send_mail(self, mail, recipients=None):
+    def send_mail(self, mail, recipients=None, due_at=None):
         '''SMTP: send  Mail
-
         :param Mail mail: :ref:`emailqueue.models.Mail` instance
         :param list(address) recipients: adhoc recipients or None
-             If None, :ref:`emailqueue.models.Recipient` of this Mail are used.
+             If None, :ref:`emailqueue.models.Recipient`
+             of this Mail are used.
         '''
-
         send_mail.apply_async(
             args=[mail.id, recipients],
-            eta=make_eta(mail.due_at))
+            eta=make_eta(due_at or mail.due_at))
 
     def forward_message(self, message):
         '''SMTP:Forward a Message
