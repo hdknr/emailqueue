@@ -122,6 +122,11 @@ Mail:メール
          - datetime
          - 送信予定
 
+    *    - sent_at
+         - 送信日時
+         - datetime
+         - 送信日時
+
     *    - sleep_from
          - 停止開始時間
          - time
@@ -312,6 +317,11 @@ Postbox:メール転送
     *    - updated_at
          - 更新日時
          - datetime
+         - 
+
+    *    - server
+         - Sending Server
+         - integer
          - 
 
     *    - address
@@ -531,10 +541,25 @@ Server:Server
          - varchar(100)
          - 
 
-    *    - forwarder
-         - Mail Forwarder
-         - varchar(100)
+    *    - handler_class
+         - Service Handler
+         - varchar(200)
          - 
+
+    *    - settings
+         - Mail Server Settings
+         - longtext
+         - 
+
+    *    - wait_every
+         - 送信ごとの待ち時間
+         - integer
+         - 送信ごとの待ち時間(ミリ秒)
+
+    *    - wait_ms
+         - 待ち時間(ミリ秒)
+         - integer
+         - 待ち時間(ミリ秒)
 
 .. include:: emailqueue.models.Server.rst
 

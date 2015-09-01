@@ -6,26 +6,45 @@
 Welcome to emailqueue's documentation!
 ======================================
 
-models
-----------
+general
+--------------------
 
 .. toctree::
     :maxdepth: 2
 
     tutorial
+    terms
+
+emailqueue
+--------------------
+
+.. toctree::
+    :maxdepth: 2
 
     emailqueue.tasks
     emailqueue.utils
+    models/emailqueue
+
+
+emailsmtp
+--------------------
+
+.. toctree::
+    :maxdepth: 2
 
     emailsmtp.tasks
     emailsmtp.forms
     emailsmtp.management
 
-    models/emailqueue
     models/emailsmtp
-    models/emailses
 
-    terms
+emailsmtp
+--------------------
+
+.. toctree::
+    :maxdepth: 2
+
+    models/emailses
 
 Indices and tables
 ==================
