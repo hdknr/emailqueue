@@ -101,7 +101,7 @@ def process_message(message):
 class Handler(object):
     '''Abstract Task Handler'''
 
-    def send_mmail(self, mail, recipients=None, *args, **kwargs):
+    def send_mail(self, messaage, *args, **kwargs):
         '''Send Message
 
         :param Mail mail: :ref:`emailqueue.models.Mail`

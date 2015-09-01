@@ -81,7 +81,10 @@ def send_mail(mail, recipients=None):
     for recipient in recipients:
         if mail.delay():    # make this Mail pending state
             logger.info("Mail({0}) is delayed".format(mail.id))
-            break
+            send_mail.apply_async(
+                args=[mail.id, None],           # TODO: in the case of adhoc
+                eta=make_eta(mail.due_at))
+            return
 
         if isinstance(recipient, basestring):
             to = queue_models.MailAddress.objects.get_or_create(
@@ -103,6 +106,10 @@ def send_mail(mail, recipients=None):
             recipient.save()
 
         server.wait()
+
+    # completed sending
+    mail.sent_at = now()
+    mail.save()
 
 
 @shared_task
@@ -221,7 +228,7 @@ def forward(message):
 class Handler(queue_tasks.Handler):
     '''SMTP Handler)
     '''
-    def send_mail(self, mail, recipients=None, due_at=None):
+    def send_mail(self, mail, recipients=None, due_at=None, *args, **kwargs):
         '''SMTP: send  Mail
         :param Mail mail: :ref:`emailqueue.models.Mail` instance
         :param list(address) recipients: adhoc recipients or None

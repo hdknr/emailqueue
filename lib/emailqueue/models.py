@@ -2,7 +2,7 @@
 '''
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.timezone import now
+from django.utils.timezone import now, localtime
 # from django.utils.encoding import force_text
 from django.utils.encoding import smart_str
 from django import template
@@ -301,6 +301,11 @@ class Mail(BaseModel):
         return self.subject
 
     def add_recipient(self, email):
+        '''Add an recipient email address to this Mail
+
+        - email is registered as a :ref:`emailqueue.models.MailAddress`
+          for bounce management.
+        '''
         to, created = MailAddress.objects.get_or_create(email=email)
         recipient, created = Recipient.objects.get_or_create(
             mail=self, to=to,)
@@ -317,7 +322,7 @@ class Mail(BaseModel):
             self.due_at is None or self.due_at <= dt)
 
     def update_due_at(self, days=0):
-        self.due_at = now() + timedelta(days=days)
+        self.due_at = localtime(now()) + timedelta(days=days)
 
         # WARN:microsecond is trunctad by MySQL 5.6+
         self.due_at = self.due_at.replace(
@@ -328,8 +333,7 @@ class Mail(BaseModel):
         self.save()
 
     def delay(self, dt=None):
-        dd = now()
-        dt = dt or dd.time()
+        dt = dt or localtime(now()).time()
 
         if any([
             not self.sleep_from, not self.sleep_to, not dt]
@@ -344,7 +348,6 @@ class Mail(BaseModel):
             # MUST today
             self.update_due_at()
             return True
-
         if all([
             self.sleep_from > self.sleep_to,
         ]):
@@ -393,6 +396,15 @@ class Mail(BaseModel):
         message['Message-ID'] = message_id
 
         return message
+
+    def send_mail(self, recipients=None, due_at=None, *args, **kwargs):
+        ''' Send this Mail to all recipients
+        :param list(address) recipeints: if None, Recipient list is useed
+        :param datetime due_at: if None, self.due_at is used
+        '''
+        if self.sender and self.sender.server.handler:
+            self.sender.server.handler.send_mail(
+                self, recipients=None, due_at=None, *args, **kwargs)
 
 
 class RecipientQuerySet(models.QuerySet):
