@@ -40,3 +40,40 @@ class Command(PyCommand):
             from emailqueue.models import Mail
             for mail in Mail.objects.active_set():
                 print mail.id
+
+    class RawMessage(SubCommand):
+        name = "raw_message"
+        description = "Raw Message"
+        args = [
+            (('path',), dict(nargs='*', help="Path to Email Messsae File ")),
+        ]
+
+        def get_dsn(self, message):
+            print "multipart ?", message.is_multipart()
+            if message.is_multipart() and isinstance(
+                    message.get_payload(), list):
+                return message.get_payload(1)
+            return None
+
+        def run(self, params, **options):
+            '''
+            - http://docs.python.jp/2/library/email.message.html
+            '''
+            from email import message_from_string
+            from email.message import Message
+            from email.utils import parseaddr
+            for path in params.path:
+                with open(path) as data:
+                    msg = message_from_string(data.read())
+                    assert isinstance(msg, Message)
+                    print "* ", path
+                    print "  From:", parseaddr(msg['From'])[1]
+                    print "  Mime:", msg['MIME-Version']
+                    dsn = self.get_dsn(msg)
+                    if dsn:
+                        print "  DSN:", dsn
+
+                    # print ">>>", msg.get_payload(1)
+                    # print dir(msg)
+                    # for item in msg.items():
+                    #     print item[0]

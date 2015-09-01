@@ -30,7 +30,7 @@ def from_raw_return_path(address):
     m = m and m.groupdict() or {
         'handler': DEFAULT_HANDLER,
         'domain': address.split('@')[1]}
-    m['args'] = m.get('args', '').split('_')
+    m['args'] = tuple(m.get('args', '').split('_'))
     return m
 
 
@@ -62,4 +62,5 @@ def from_return_path(return_path):
     code = get_hashcode(address)
     if code == m.get('code', ''):
         return from_raw_return_path(address)
-    return {'handler': DEFAULT_HANDLER, 'domain': '', 'args': ()}
+    return {'handler': DEFAULT_HANDLER,
+            'domain': return_path.split('@')[1], 'args': ()}

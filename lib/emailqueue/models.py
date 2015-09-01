@@ -546,14 +546,8 @@ class Message(BaseModel):
 
     def get_handler(self):
         ''' Email Hanlders of Message object
-
-        - if dsn is not None, this message is a error returned one.
-        - otherwise someone in the world sent this `direct`ly
         '''
-        if self.dsn:
-            return utils.from_return_path(self.recipient)
-        else:
-            return {'handler': 'direct', }
+        return utils.from_return_path(self.recipient)
 
     @property
     def forward_return_path(self):

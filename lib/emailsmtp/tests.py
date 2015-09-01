@@ -3,7 +3,7 @@ from django.conf import settings
 from emailqueue import models
 
 
-class MailTest(TestCase):
+class SmtpTest(TestCase):
     def setUp(self):
         settings.CELERY_ALWAYS_EAGER = True
         self.server = models.Server.objects.create(

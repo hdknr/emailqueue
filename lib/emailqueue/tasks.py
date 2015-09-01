@@ -18,17 +18,17 @@ def get_message_instance(message):
         models.Message.objects.get(id=message)
 
 
-def error_mail(message, prefix, domain, args, **kwargs):
-    '''This message was error '''
+def handle_mail(message, **kwargs):
+    '''This message was error for :ref:`emailqueue.models.Mail`
+    '''
     # TODO:
     message.processed_at = now()
     message.save()
 
 
-def error_relay(message, handler, domain, args,
-                forwarder=None, **kwargs):
+def handle_relay(message, **kwargs):
     ''' Because the Message is error return mail to the Relay-ed message
-        , so forward this message to Relay.sender
+        , so forward this message to original Relay.sender
     '''
     relay = models.Relay.objects.filter(
         address=message.recipient).first()
@@ -42,13 +42,7 @@ def error_relay(message, handler, domain, args,
         message.server.handler.forward_message(message)
 
 
-def error_test(message, prefix, domain, args, **kwargs):
-    # TODO:
-    message.processed_at = now()
-    message.save()
-
-
-def error_fwd(message, handler, domain, args, **kwargs):
+def handle_fwd(message, **kwargs):
     '''This message is an error mail to the forwarded error message.
     So, do nothing
     '''
@@ -56,7 +50,7 @@ def error_fwd(message, handler, domain, args, **kwargs):
     message.save()
 
 
-def process_direct(message, forwarder=None, **kwargs):
+def handle_direct(message, **kwargs):
     '''Inbounce message is sent directly by a Sender
 
     :param Message message: :ref:`emailqueue.models.Message`
@@ -76,7 +70,10 @@ def process_direct(message, forwarder=None, **kwargs):
 
 
 def handle_default(message, **kwargs):
-    '''Default handler '''
+    '''Default handler
+
+    - this message may be an error return
+    '''
     message.processed_at = now()
     message.save()
 
@@ -92,13 +89,13 @@ def process_message(message):
     message = get_message_instance(message)
     params = message.get_handler()
 
-    {'direct': process_direct,
-     'relay': error_relay,
-     'fwd': error_fwd,
-     'mail': error_mail,
-     'test': error_test,
-     }.get(params['handler'], handle_default)(
-        message=message, **params)
+    {'direct': handle_direct,       # Direct to server
+     'relay': handle_relay,         # Error to Relayed
+     'fwd': handle_fwd,             # Error to Forwarded Relayed Error
+     'mail': handle_mail,           # Error to Mail(initiated this server)
+     }.get(params['handler'],
+           handle_default
+           )(message=message, **params)
 
 
 class Handler(object):
