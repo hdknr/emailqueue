@@ -76,14 +76,23 @@ def send_mail(mail, recipients=None):
         logger.debug("No Server for {0}".format(mail.sender.domain))
         return
 
+    if mail.sent_at:
+        # Already completed
+        logger.warn("This message has been already processed")
+        return
+
+    # active_set:
+    #   - recipients already sent (sent_at is not None)are NOT included
     recipients = recipients or mail.recipient_set.active_set()
 
     for recipient in recipients:
         if mail.delay():    # make this Mail pending state
             logger.info("Mail({0}) is delayed".format(mail.id))
+            # enqueue another task
             send_mail.apply_async(
                 args=[mail.id, None],           # TODO: in the case of adhoc
                 eta=make_eta(mail.due_at))
+            # terminate this task
             return
 
         if isinstance(recipient, basestring):
