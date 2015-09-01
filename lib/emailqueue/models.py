@@ -322,6 +322,7 @@ class Mail(BaseModel):
             self.due_at is None or self.due_at <= dt)
 
     def update_due_at(self, days=0):
+        '''Update due_at with `sleep_to` '''
         self.due_at = localtime(now()) + timedelta(days=days)
 
         # WARN:microsecond is trunctad by MySQL 5.6+
@@ -333,6 +334,7 @@ class Mail(BaseModel):
         self.save()
 
     def delay(self, dt=None):
+        '''Mail sending process is delayed until `sleep_to` '''
         dt = dt or localtime(now()).time()
 
         if any([
