@@ -3,8 +3,16 @@ from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
 
 
+class MailAddressAdmin(admin.ModelAdmin):
+    search_fields = ['email', ]
+
+
 class RecipientAdmin(admin.ModelAdmin):
     raw_id_fields = ['mail', 'to', ]
+
+
+class PostboxAdmin(admin.ModelAdmin):
+    raw_id_fields = ['forward', ]
 
 
 class ReportAdmin(admin.ModelAdmin):

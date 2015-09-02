@@ -104,6 +104,10 @@ def send_mail(mail, recipients=None):
             to = recipient.to
             return_path = recipient.return_path
 
+        if not to.enabled:
+            logger.warn(u"{0} is disabled".format(to.__unicode__()))
+            continue
+
         send_raw_message(
             return_path,
             [to.email],
@@ -213,6 +217,7 @@ def forward(message):
 
     :param Message message: :ref:`emailqueue.models.Message`
     '''
+    assert message.forward_recipient, "Forward Reipient MUST be specified."
 
     message = get_message_instance(message)
     server = queue_models.Server.objects.filter(
@@ -220,7 +225,7 @@ def forward(message):
 
     send_raw_message(
         message.forward_sender,
-        [message.forward_recipient],
+        [message.forward_recipient.email],
         message.raw_message,
         server.backend)
 

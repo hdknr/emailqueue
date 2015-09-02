@@ -18,17 +18,24 @@ def get_message_instance(message):
         models.Message.objects.get(id=message)
 
 
-def handle_mail(message, **kwargs):
-    '''This message was error for :ref:`emailqueue.models.Mail`
+def handle_mail(message, handler=None, domain=None, args=(), **kwargs):
+    '''This message was bounced error :ref:`emailqueue.models.Mail`
     '''
-    # TODO:
+    if len(args) > 1:
+        # Bounced count up
+        for ma in models.MailAddress.objects.filter(
+            id=args[1], recipient__mail__id=args[0]
+        ):
+            ma.bounced = ma.bounced + 1
+            ma.save()
+
     message.processed_at = now()
     message.save()
 
 
 def handle_relay(message, **kwargs):
-    ''' Because the Message is error return mail to the Relay-ed message
-        , so forward this message to original Relay.sender
+    '''Because the Message is error return mail to the Relay-ed message
+    , so forward this message to original Relay.sender
     '''
     relay = models.Relay.objects.filter(
         address=message.recipient).first()
@@ -60,13 +67,17 @@ def handle_direct(message, **kwargs):
     '''
     relay = models.Relay.objects.create_from_message(message)
 
-    if relay:
-        message.forward_sender = relay.address
-        message.forward_recipient = relay.postbox.forward
-        message.save()
-        message.server.handler.forward_message(message)
+    if relay and relay.postbox.forward:
+        if not relay.postbox.forward.enabled:
+            logger.warn(u"{0} is disabled.".format(
+                relay.postbox.forward.__unicode__()))
+            return
 
-    # TODO: check postbox for command execution
+        message.forward_sender = relay.address      # return-path
+        message.forward_recipient = relay.postbox.forward   # forwarding address
+        message.save()
+        # Do Forwarding...
+        message.server.handler.forward_message(message)
 
 
 def handle_default(message, **kwargs):
@@ -87,7 +98,7 @@ def process_message(message):
     :param Message message: `emailqueue.models.Message` instance or `id`
     '''
     message = get_message_instance(message)
-    params = message.get_handler()
+    params = message.bounced_parameters
 
     {'direct': handle_direct,       # Direct to server
      'relay': handle_relay,         # Error to Relayed

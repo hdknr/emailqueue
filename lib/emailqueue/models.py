@@ -121,6 +121,14 @@ class MailAddress(BaseModel):
     def __unicode__(self):
         return self.email
 
+    @property
+    def domain(self):
+        def _cached():
+            self._domain = self.email and self.email.split('@')[1] or None
+            return self._domain
+
+        return getattr(self, '_domain', _cached())
+
 
 class Postbox(BaseModel):
     ''' Mail Forwarding Definition
@@ -132,9 +140,10 @@ class Postbox(BaseModel):
         _('Postbox Address'), help_text=_('Postbox Address Help'),
         max_length=50)
 
-    forward = models.EmailField(
-        _('Forwoard Address'), help_text=_('Forwoard Address Help'),
-        max_length=50, null=True, blank=True, default=None)
+    forward = models.ForeignKey(
+        MailAddress, verbose_name=_('Forward Address'),
+        help_text=_('Forward Address Help'),
+        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
 
     deleted = models.BooleanField(
         _('Is Deleted'), help_text=_('Is Deleted Help'), default=False, )
@@ -153,18 +162,17 @@ class Postbox(BaseModel):
         verbose_name_plural = _('Postbox')
 
     def __unicode__(self):
-        return u"{0} >> {1}".format(
-            self.address, self.forward,
-        )
+        to = self.forward and self.forward.email or ''
+        return u"{0} >> {1}".format(self.address, to,)
 
     @property
     def domain(self):
-        return self.address.split('@')[1]
+        return self.server.domain
 
 
 class RelayQuerySet(models.QuerySet):
     def create_from_message(self, message):
-        ''' Create a Relay for Message '''
+        '''Create a Relay for Message '''
 
         postbox = Postbox.objects.filter(address=message.recipient).first()
         if not postbox:
@@ -175,6 +183,7 @@ class RelayQuerySet(models.QuerySet):
         sender, created = MailAddress.objects.get_or_create(
             email=message.sender)
 
+        # return-path
         address = utils.to_return_path(
             "relay", postbox.domain,
             sender.id, postbox.id,)
@@ -185,25 +194,24 @@ class RelayQuerySet(models.QuerySet):
 
         return relay
 
-    def handle_error(self, mesage):
-        pass
-
 
 class Relay(BaseModel):
     ''' Relay Entries for Postbox
     '''
     address = models.EmailField(
-        _('Relay Address'), help_text=_('Relay Address Help'),
+        _('Relay Return-Path Address'),
+        help_text=_('Relay Return-Path Address Help'),
         max_length=50, db_index=True, unique=True)
-
-    postbox = models.ForeignKey(
-        Postbox,
-        verbose_name=_('Postbox'), help_text=_('Postbox Help'))
 
     sender = models.ForeignKey(
         MailAddress,
-        verbose_name=_('Sedner Address'),
-        help_text=_('Sender Address Help'))
+        verbose_name=_('Original Sender Address'),
+        help_text=_('Original Sender Address Help'))
+
+    postbox = models.ForeignKey(
+        Postbox,
+        verbose_name=_('Original Recipient Postbox'),
+        help_text=_('Original Recipient Postbox Help'))
 
     is_spammer = models.BooleanField(
         _('Is Spammer'), default=False)
@@ -445,7 +453,7 @@ class Recipient(BaseModel):
     objects = RecipientQuerySet.as_manager()
 
     def create_message(self, encoding="utf-8",):
-        return self.mail.create_message(self.to)
+        return self.mail.create_message(self.to, encoding=encoding)
 
     def save(self, *args, **kwargs):
         ''' If return_path is not set, create it before `save` '''
@@ -534,6 +542,10 @@ class MailMessage(BaseModel):
             return None
 
 
+class MessageQuerySet(models.QuerySet):
+    pass
+
+
 class Message(MailMessage):
     ''' Raw Message '''
     server = models.ForeignKey(
@@ -553,10 +565,10 @@ class Message(MailMessage):
         help_text=_('Fowarding Sender Help'),  max_length=100,
         default=None, blank=True, null=True)
 
-    forward_recipient = models.EmailField(
-        _('Forwarding Recipient'),
+    forward_recipient = models.ForeignKey(
+        MailAddress, verbose_name=_('Forwarding Recipient'),
         help_text=_('Forwarding Recipient Help'), max_length=100,
-        default=None, blank=True, null=True)
+        default=None, blank=True, null=True, on_delete=models.SET_DEFAULT)
 
     processed_at = models.DateTimeField(
         _('Processed At'), null=True, blank=True, default=None)
@@ -565,14 +577,17 @@ class Message(MailMessage):
         verbose_name = _(u'Message')
         verbose_name_plural = _(u'Message')
 
+    objects = MailQuerySet.as_manager()
+
     @property
     def bounced_parameters(self):
-        return utils.from_return_path(self.recipient)
-
-    def get_handler(self):
         ''' Email Hanlders of Message object
         '''
-        return utils.from_return_path(self.recipient)
+        def _cached():
+            self._bounced_parameters = utils.from_return_path(self.recipient)
+            return self._bounced_parameters
+
+        return getattr(self, '_bounced_parameters', _cached())
 
     @property
     def forward_return_path(self):
