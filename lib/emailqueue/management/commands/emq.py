@@ -49,7 +49,6 @@ class Command(PyCommand):
         ]
 
         def get_dsn(self, message):
-            print "multipart ?", message.is_multipart()
             if message.is_multipart() and isinstance(
                     message.get_payload(), list):
                 return message.get_payload(1)
@@ -69,11 +68,11 @@ class Command(PyCommand):
                     print "* ", path
                     print "  From:", parseaddr(msg['From'])[1]
                     print "  Mime:", msg['MIME-Version']
-                    dsn = self.get_dsn(msg)
-                    if dsn:
-                        print "  DSN:", dsn
 
-                    # print ">>>", msg.get_payload(1)
+                    key = 'X-Failed-Recipients'
+                    print key, ":", msg[key]
+
                     # print dir(msg)
-                    # for item in msg.items():
-                    #     print item[0]
+                    print "Multipart? : ", msg.is_multipart()
+                    for part in msg.walk():
+                        print "@@@", part.get_content_type()

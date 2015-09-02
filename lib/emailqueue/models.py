@@ -472,46 +472,25 @@ class Attachment(BaseModel):
         verbose_name_plural = _('Attachment')
 
 
-class Message(BaseModel):
-    ''' Raw Message '''
-    server = models.ForeignKey(
-        Server, verbose_name=_('Recipient Server'),
-        default=None, blank=True, null=True)
-
-    sender = models.EmailField(
-        _('Sender'), help_text=_('Sender Help'),  max_length=100,
-        default=None, blank=True, null=True)
-
-    recipient = models.EmailField(
-        _('Recipient'), help_text=_('Recipient Help'), max_length=100,
-        default=None, blank=True, null=True)
-
+class MailMessage(BaseModel):
     raw_message = models.TextField(
         _(u'Raw Message Text'), help_text=_(u'Raw Message Text Help'),
         default=None, blank=True, null=True)
 
-    forward_sender = models.EmailField(
-        _('Forwarding Sender'),
-        help_text=_('Fowarding Sender Help'),  max_length=100,
-        default=None, blank=True, null=True)
-
-    forward_recipient = models.EmailField(
-        _('Forwarding Recipient'),
-        help_text=_('Forwarding Recipient Help'), max_length=100,
-        default=None, blank=True, null=True)
-
-    processed_at = models.DateTimeField(
-        _('Processed At'), null=True, blank=True, default=None)
-
     class Meta:
-        verbose_name = _(u'Message')
-        verbose_name_plural = _(u'Message')
+        abstract = True
+
+    def load_message(self, path):
+        '''Load Raw Message '''
+        self._mailobject = None     # clear cache
+        with open(path) as src:
+            self.raw_message = src.read()
 
     @property
     def mailobject(self):
         ''' return mail object
 
-            :rtype: email.message.Message
+        :rtype: email.message.Message
         '''
         def _cached():
             # cache message_from_string(self.raw_message)
@@ -553,6 +532,38 @@ class Message(BaseModel):
             return self.dsn and self.dsn.get_payload(1)['status']
         except:
             return None
+
+
+class Message(MailMessage):
+    ''' Raw Message '''
+    server = models.ForeignKey(
+        Server, verbose_name=_('Recipient Server'),
+        default=None, blank=True, null=True)
+
+    sender = models.EmailField(
+        _('Sender'), help_text=_('Sender Help'),  max_length=100,
+        default=None, blank=True, null=True)
+
+    recipient = models.EmailField(
+        _('Recipient'), help_text=_('Recipient Help'), max_length=100,
+        default=None, blank=True, null=True)
+
+    forward_sender = models.EmailField(
+        _('Forwarding Sender'),
+        help_text=_('Fowarding Sender Help'),  max_length=100,
+        default=None, blank=True, null=True)
+
+    forward_recipient = models.EmailField(
+        _('Forwarding Recipient'),
+        help_text=_('Forwarding Recipient Help'), max_length=100,
+        default=None, blank=True, null=True)
+
+    processed_at = models.DateTimeField(
+        _('Processed At'), null=True, blank=True, default=None)
+
+    class Meta:
+        verbose_name = _(u'Message')
+        verbose_name_plural = _(u'Message')
 
     @property
     def bounced_parameters(self):
