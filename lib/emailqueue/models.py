@@ -589,7 +589,7 @@ class Message(BaseModel, MailMessage, RelayedMessage):
 
     service = models.EmailField(
         _('Service Name'), help_text=_('Service Name Help'),  max_length=50,
-        default=None, blank=True, null=True)
+        default=None, blank=True, null=True, db_index=True, )
 
     sender = models.EmailField(
         _('Sender'), help_text=_('Sender Help'),  max_length=100,

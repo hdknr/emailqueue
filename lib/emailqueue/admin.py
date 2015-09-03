@@ -28,6 +28,7 @@ class ReportAdmin(admin.ModelAdmin):
 class MessageAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     actions = ['process_message', ]
+    list_filter = ['service', 'server', ]
 
     def process_message(self, request, queryset):
         for instance in queryset:
