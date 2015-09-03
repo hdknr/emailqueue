@@ -90,7 +90,7 @@ INSTALLED_APPS += (
     'gunicorn',     # python manage.py run_gunicorn
     'alumni',
     'circles',
-    'djcelery',
+    # 'djcelery',
     'kombu.transport.django',
 )
 
