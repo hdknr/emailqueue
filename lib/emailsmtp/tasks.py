@@ -183,7 +183,8 @@ def store_raw_message(
 
 
 @shared_task
-def save_inbound(sender, recipient, raw_message):
+def save_inbound(service, sender, recipient, original_recipient,
+                 raw_message, *args, **kwargs):
     '''
     Save `raw_message` (serialized email) to  :ref:`emailqueue.models.Message`
     This is called by bounce hander defined in SMTP server
@@ -192,8 +193,10 @@ def save_inbound(sender, recipient, raw_message):
     1. Create a new `emailqueue.models.Message`.
     2. Give it to `emailqueue.tasks.process_message` task.
 
+    :param string service: service name
     :param email sender: sender address
     :param email recipient: recipient address
+    :param email original_recipient: origninal recipient address
     :param basestring raw_message: seriazlied email
     '''
 
@@ -202,7 +205,11 @@ def save_inbound(sender, recipient, raw_message):
             domain=recipient.split('@')[1]).first()
         inbound = queue_models.Message.objects.create(
             server=server,
-            sender=sender, recipient=recipient, raw_message=raw_message)
+            service=service,
+            sender=sender,
+            recipient=recipient,
+            original_recipient=original_recipient,
+            raw_message=raw_message, )
 
         inbound.process_message()
     except:

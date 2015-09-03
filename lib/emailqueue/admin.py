@@ -31,7 +31,8 @@ class MessageAdmin(admin.ModelAdmin):
 
     def process_message(self, request, queryset):
         for instance in queryset:
-            instance.server.handler.process_message(instance)
+            if instance.server and instance.server.handler:
+                instance.server.handler.process_message(instance)
 
     process_message.short_description = _('Process Message')
 

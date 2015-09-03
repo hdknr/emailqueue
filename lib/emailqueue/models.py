@@ -383,7 +383,7 @@ class Mail(BaseModel):
     def create_message(self, mail_address, encoding="utf-8",):
         ''' MailAddress Object'''
 
-        # TODO: encoding depends on to.email doain actually
+        # TODO: encoding depends on to.email domain actually
         message_id = uuid.uuid1().hex
 
         if encoding == 'utf-8':
@@ -587,12 +587,21 @@ class Message(BaseModel, MailMessage, RelayedMessage):
         Server, verbose_name=_('Recipient Server'),
         default=None, blank=True, null=True)
 
+    service = models.EmailField(
+        _('Service Name'), help_text=_('Service Name Help'),  max_length=50,
+        default=None, blank=True, null=True)
+
     sender = models.EmailField(
         _('Sender'), help_text=_('Sender Help'),  max_length=100,
         default=None, blank=True, null=True)
 
     recipient = models.EmailField(
         _('Recipient'), help_text=_('Recipient Help'), max_length=100,
+        default=None, blank=True, null=True)
+
+    original_recipient = models.EmailField(
+        _('Original Recipient'),
+        help_text=_('Oringinal Recipient Help'), max_length=100,
         default=None, blank=True, null=True)
 
     processed_at = models.DateTimeField(

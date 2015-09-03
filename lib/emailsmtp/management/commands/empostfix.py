@@ -55,8 +55,11 @@ class Command(Command):
         name = "bounce"
         description = "bounce by incoming mail"
         args = [
+            (('service',), dict(nargs=1, help="Service Name")),
             (('sender',), dict(nargs=1, help="Sender Address")),
             (('recipient',), dict(nargs=1, help="Recipient Address")),
+            (('original_recipient',),
+             dict(nargs=1, help="Original Recipient Address")),
         ]
 
         def run(self, params, **options):
@@ -68,9 +71,14 @@ class Command(Command):
                 log.warn('no stdin')
                 return
 
+            print ">>>>", params
             save_inbound(
-                params.sender[0], params.recipient[0],
-                ''.join(sys.stdin.read()))
+                params.service[0],
+                params.sender[0],
+                params.recipient[0],
+                params.original_recipient[0],
+                ''.join(sys.stdin.read()),          # raw_message
+            )
 
     class SendMail(SubCommand):
         name = "send_mail"
