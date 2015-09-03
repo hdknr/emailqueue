@@ -28,13 +28,13 @@ hosts = localhost
 dbname = emailqueue
 user = emailqueue
 password = emailqueue
-table = postfix_transport
+table = postfix_domain
 select_field = domain
 where_field = domain
 ~~~
 
 ~~~
-CREATE TABLE `postfix_transport` (
+CREATE TABLE `postfix_domain` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `domain` varchar(50) NOT NULL,
   `transport` varchar(200) NOT NULL,
@@ -50,7 +50,7 @@ host = localhost
 user = emailqueue
 password = emailqueue
 dbname = emailqueue
-table = postfix_transport
+table = postfix_domain
 select_field = transport
 where_field = domain
 ~~~
@@ -100,7 +100,7 @@ mailbox unix  -       n       n       -       -       pipe
 - `error` is service defined by Postfix.
 
 ~~~
-mysql> select * from postfix_transport;
+mysql> select * from postfix_domain;
 +----+---------------+----------------------+
 | id | domain        | transport            |
 +----+---------------+----------------------+
