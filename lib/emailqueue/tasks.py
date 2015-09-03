@@ -38,7 +38,7 @@ def handle_relay(message, **kwargs):
     , so forward this message to original Relay.sender
     '''
     # Look for Original Message
-    original = models.Message.find_origianl_message(message)
+    original = models.Message.objects.find_original_message(message)
     if original:
         message.relay = original.relay
         message.save()
