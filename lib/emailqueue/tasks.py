@@ -37,20 +37,15 @@ def handle_relay(message, **kwargs):
     '''Because the Message is error return mail to the Relay-ed message
     , so forward this message to original Relay.sender
     '''
-    # Look for Relay
-    relay = models.Relay.objects.filter(
-        address=message.recipient).first()
-
-    if relay:
-        message.processed_at = now()
-        message.forward_sender = message.forward_return_path
-        message.forward_recipient = relay.sender
+    # Look for Original Message
+    original = models.Message.find_origianl_message(message)
+    if original:
+        message.relay = original.relay
         message.save()
+        message.server.handler.reverse_message(message)
 
-        message.server.handler.forward_message(message)
 
-
-def handle_fwd(message, **kwargs):
+def handle_reverse(message, **kwargs):
     '''This message is an error mail to the forwarded error message.
     So, do nothing
     '''
@@ -73,11 +68,9 @@ def handle_direct(message, **kwargs):
             logger.warn(u"{0} is disabled.".format(
                 relay.postbox.forward.__unicode__()))
         else:
-            message.forward_sender = relay.address
-            message.forward_recipient = relay.postbox.forward
+            message.relay = relay
             message.save()
-            # Do Forwarding...
-            message.server.handler.forward_message(message)
+            message.server.handler.relay_message(message)
 
     # otherwise this Message is not handled
     # keep `processed_at` == None
@@ -105,7 +98,7 @@ def process_message(message):
 
     {'direct': handle_direct,       # Direct to server
      'relay': handle_relay,         # Error to Relayed
-     'fwd': handle_fwd,             # Error to Forwarded Relayed Error
+     'reverse': handle_reverse,     # Error to Reversed relayed
      'mail': handle_mail,           # Error to Mail(initiated this server)
      }.get(params['handler'],
            handle_default
@@ -125,9 +118,8 @@ class Handler(object):
     def process_message(self, message, *args, **kwargs):
         process_message(message)
 
-    def forward_message(self, message, *args, **kwargs):
-        '''Forward Message
+    def relay_message(self, message, *args, **kwargs):
+        raise NotImplementedError
 
-        :param Mail mail: :ref:`emailqueue.models.Mail`
-        '''
+    def reverse_message(self, message, *args, **kwars):
         raise NotImplementedError

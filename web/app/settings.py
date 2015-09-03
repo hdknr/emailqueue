@@ -118,4 +118,4 @@ try:
     # from app.logs import *      # noqa
     pass
 except:
-    LOGGING = {'version': 1, }
+    LOGGING = {'version': 1, 'disable_existing_loggers': False, }

@@ -89,9 +89,17 @@ class SmtpTest(TestCase):
         self.assertEquals(mo['To'], recipient.address)
         self.assertEquals(mo['From'], sender.address)
 
-        self.assertEqual(forwarded_message.sender, message.forward_sender)
-        self.assertEqual(forwarded_message.recipient,
-                         message.forward_recipient.email)
+        self.assertEqual(forwarded_message.sender, message.relay_return_path)
+        self.assertEqual(forwarded_message.recipient, message.relay_to)
+
+        # create a bounced message for Relay for testing
+        from emailsmtp.tasks import save_inbound
+        save_inbound('MAILER-DAEMON', forwarded_message.sender,
+                     forwarded_message.raw_message)
+        self.assertEqual(3, models.Message.objects.count())
+        bounced = models.Message.objects.last()
+        original = models.Message.objects.find_original_message(bounced)
+        self.assertEqual(original, message)
 
         # Relay map MUST be creaed
         self.assertEqual(1, models.Relay.objects.count())

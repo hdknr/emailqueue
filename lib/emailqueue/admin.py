@@ -9,10 +9,16 @@ class MailAddressAdmin(admin.ModelAdmin):
 
 class RecipientAdmin(admin.ModelAdmin):
     raw_id_fields = ['mail', 'to', ]
+    list_excludes = ('created_at', )
+    date_hierarchy = 'sent_at'
 
 
 class PostboxAdmin(admin.ModelAdmin):
     raw_id_fields = ['forward', ]
+
+
+class RelayAdmin(admin.ModelAdmin):
+    raw_id_fields = ['sender', 'postbox', ]
 
 
 class ReportAdmin(admin.ModelAdmin):

@@ -9,7 +9,7 @@ from django.core.mail.backends.smtp import EmailBackend
 
 # from celery import current_task
 from celery import shared_task
-
+from celery.utils.log import get_task_logger
 
 import traceback
 
@@ -19,8 +19,7 @@ from emailqueue import (
     utils,
 )
 
-import logging
-logger = logging.getLogger('emailsmtp')
+logger = get_task_logger(__name__)
 
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND', settings.EMAIL_BACKEND)
 
@@ -205,32 +204,9 @@ def save_inbound(sender, recipient, raw_message):
             server=server,
             sender=sender, recipient=recipient, raw_message=raw_message)
 
-        queue_tasks.process_message(inbound)
+        inbound.process_message()
     except:
         logger.error(traceback.format_exc())
-
-
-@shared_task
-def forward(message):
-    '''
-    Forward to inboud mail to out side.
-
-    :param Message message: :ref:`emailqueue.models.Message`
-    '''
-    assert message.forward_recipient, "Forward Reipient MUST be specified."
-
-    message = get_message_instance(message)
-    server = queue_models.Server.objects.filter(
-        domain=message.forward_sender.split('@')[1]).first()
-
-    send_raw_message(
-        message.forward_sender,
-        [message.forward_recipient.email],
-        message.raw_message,
-        server.backend)
-
-    message.processed_at = now()
-    message.save()
 
 
 # @shared_task
@@ -255,8 +231,12 @@ class Handler(queue_tasks.Handler):
             args=[mail.id, recipients],
             eta=make_eta(due_at or mail.due_at))
 
-    def forward_message(self, message):
-        '''SMTP:Forward a Message
-        :param Mail mail: :ref:`emailqueue.models.Mail` instance
-        '''
-        forward(message)
+    def relay_message(self, message):
+        send_raw_message(message.relay_return_path,
+                         [message.relay_to],
+                         message.raw_message)
+
+    def reverse_message(self, message):
+        send_raw_message(message.reverse_return_path,
+                         [message.reverse_to],
+                         message.raw_message)
