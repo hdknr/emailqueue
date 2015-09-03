@@ -61,13 +61,13 @@ def get_message_instance(message):
 
 @shared_task
 def send_mail(mail, recipients=None):
-    '''  Send mail
+    '''Send mail
 
-    :param mail:  :ref:`emailqueue.models.Mail` or id
-    :param recipients: List of adhoc recipients.
+    :param Mail mail:  :ref:`emailqueue.models.Mail` or id
+    :param list(Email) recipients: List of adhoc recipients.
 
-                       If not specified,
-                       :ref:`emailqueue.models.Recipient` list is used.
+    If `recipients` is not specified,
+    :ref:`emailqueue.models.Recipient` list is used.
     '''
     mail = get_mail_instance(mail)
 
@@ -244,10 +244,12 @@ class Handler(queue_tasks.Handler):
     '''
     def send_mail(self, mail, recipients=None, due_at=None, *args, **kwargs):
         '''SMTP: send  Mail
+
         :param Mail mail: :ref:`emailqueue.models.Mail` instance
         :param list(address) recipients: adhoc recipients or None
-             If None, :ref:`emailqueue.models.Recipient`
-             of this Mail are used.
+
+        If `recipients` is None, :ref:`emailqueue.models.Recipient`
+        of this Mail are used.
         '''
         send_mail.apply_async(
             args=[mail.id, recipients],

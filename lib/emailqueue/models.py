@@ -427,9 +427,6 @@ class RecipientQuerySet(models.QuerySet):
             sent_at__isnull=True,
         )
 
-    def handle_error(self, message):
-        pass
-
 
 class Recipient(BaseModel):
     '''Recipients for a Mail
@@ -542,10 +539,6 @@ class MailMessage(BaseModel):
             return None
 
 
-class MessageQuerySet(models.QuerySet):
-    pass
-
-
 class Message(MailMessage):
     ''' Raw Message '''
     server = models.ForeignKey(
@@ -577,8 +570,6 @@ class Message(MailMessage):
         verbose_name = _(u'Message')
         verbose_name_plural = _(u'Message')
 
-    objects = MailQuerySet.as_manager()
-
     @property
     def bounced_parameters(self):
         ''' Email Hanlders of Message object
@@ -591,6 +582,10 @@ class Message(MailMessage):
 
     @property
     def forward_return_path(self):
+        '''Return-Path for forwarding
+
+        - used ofr forwarding error message for Relayed message
+        '''
         domain = self.recipient.split('@')[1]
         address = utils.to_return_path(
             "fwd", domain, str(self.id), )

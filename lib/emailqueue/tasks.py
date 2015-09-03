@@ -37,13 +37,14 @@ def handle_relay(message, **kwargs):
     '''Because the Message is error return mail to the Relay-ed message
     , so forward this message to original Relay.sender
     '''
+    # Look for Relay
     relay = models.Relay.objects.filter(
         address=message.recipient).first()
 
     if relay:
         message.processed_at = now()
         message.forward_sender = message.forward_return_path
-        message.forward_recipient = relay.sender.email
+        message.forward_recipient = relay.sender
         message.save()
 
         message.server.handler.forward_message(message)
@@ -71,13 +72,15 @@ def handle_direct(message, **kwargs):
         if not relay.postbox.forward.enabled:
             logger.warn(u"{0} is disabled.".format(
                 relay.postbox.forward.__unicode__()))
-            return
+        else:
+            message.forward_sender = relay.address
+            message.forward_recipient = relay.postbox.forward
+            message.save()
+            # Do Forwarding...
+            message.server.handler.forward_message(message)
 
-        message.forward_sender = relay.address      # return-path
-        message.forward_recipient = relay.postbox.forward   # forwarding address
-        message.save()
-        # Do Forwarding...
-        message.server.handler.forward_message(message)
+    # otherwise this Message is not handled
+    # keep `processed_at` == None
 
 
 def handle_default(message, **kwargs):

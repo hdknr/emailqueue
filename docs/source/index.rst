@@ -12,6 +12,7 @@ general
 .. toctree::
     :maxdepth: 2
 
+    features
     tutorial
     terms
 
