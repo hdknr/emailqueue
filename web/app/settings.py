@@ -86,7 +86,6 @@ INSTALLED_APPS += (
     'emailsmtp',
     'emailqueue',
     'emailses',
-    'postfix',
     'gunicorn',     # python manage.py run_gunicorn
     'alumni',
     'circles',
