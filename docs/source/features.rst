@@ -50,3 +50,40 @@ Banned address
 - If MailAddress.enabled is False, no mails to this adddress is sent out from the Server. 
 
 
+Features List
+==================
+
+Adhoc mail
+------------
+
+- sending adhoc mail
+- bounce handling to adhoc mail DSN 
+
+Mail Maganzine
+--------------------
+
+- Mail magazine test publish to adhoc list
+- Mail magazine live publish to Recipien
+- Bounce handling test publish
+- Bounce handling live publish
+- Progress statuts
+- "Sleep Windows" for stop sending and wake again
+
+Banned Address
+------------------
+
+- disabled MailAddress
+- bounce count threashold to disabling MailAddress
+
+Relaying
+--------------
+
+- Relay forwarding
+- Reverse relaying DSN to relayed message
+- Bounce handling for DNS for reversing
+- Blacklisting Senders
+ 
+Server
+--------
+
+- Blocking blacklist for inbound
