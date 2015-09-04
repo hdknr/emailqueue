@@ -175,8 +175,10 @@ def store_raw_message(
             server = queue_models.Server.objects.filter(domain=domain).first()
             queue_models.Message.objects.create(
                 server=server,
+                service='debug',
                 sender=return_path,
                 recipient=recipient,
+                original_recipient=recipient,
                 raw_message=raw_message)
         except:
             logger.debug(traceback.format_exc())
@@ -216,12 +218,6 @@ def save_inbound(service, sender, recipient, original_recipient,
         logger.error(traceback.format_exc())
 
 
-# @shared_task
-# def send_mail_all():
-#     for mail in queue_models.Mail.objects.active_set():
-#         send_mail(mail)
-
-
 class Handler(queue_tasks.Handler):
     '''SMTP Handler)
     '''
@@ -242,8 +238,12 @@ class Handler(queue_tasks.Handler):
         send_raw_message(message.relay_return_path,
                          [message.relay_to],
                          message.raw_message)
+        message.processed_at = now()
+        message.save()
 
     def reverse_message(self, message):
         send_raw_message(message.reverse_return_path,
                          [message.reverse_to],
                          message.raw_message)
+        message.processed_at = now()
+        message.save()

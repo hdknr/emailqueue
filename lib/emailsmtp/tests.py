@@ -94,7 +94,10 @@ class SmtpTest(TestCase):
 
         # create a bounced message for Relay for testing
         from emailsmtp.tasks import save_inbound
-        save_inbound('MAILER-DAEMON', forwarded_message.sender,
+        save_inbound('debug',
+                     'MAILER-DAEMON',
+                     forwarded_message.sender,
+                     forwarded_message.sender,      # original_recipient
                      forwarded_message.raw_message)
         self.assertEqual(3, models.Message.objects.count())
         bounced = models.Message.objects.last()

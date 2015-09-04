@@ -568,9 +568,16 @@ class RelayedMessage(models.Model):
     def relay_to(self):
         return self.relay and self.relay.postbox.forward.email
 
-    @property
     def reverse_to(self):
         return self.relay and self.relay.sender.email
+
+    def relay_message(self):
+        if self.server and self.server.handler:
+            self.server.handler.relay_message(self)
+
+    def reverse_message(self):
+        if self.server and self.server.handler:
+            self.server.handler.reverse_message(self)
 
 
 class MessageQuerySet(models.QuerySet):

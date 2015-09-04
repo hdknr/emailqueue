@@ -42,7 +42,7 @@ def handle_relay(message, **kwargs):
     if original:
         message.relay = original.relay
         message.save()
-        message.server.handler.reverse_message(message)
+        message.reverse_message()
 
 
 def handle_reverse(message, **kwargs):
@@ -54,7 +54,7 @@ def handle_reverse(message, **kwargs):
 
 
 def handle_direct(message, **kwargs):
-    '''Inbounce message is sent directly by a Sender
+    '''Inbound message is sent directly by a Sender
 
     :param Message message: :ref:`emailqueue.models.Message`
 
@@ -70,10 +70,12 @@ def handle_direct(message, **kwargs):
         else:
             message.relay = relay
             message.save()
-            message.server.handler.relay_message(message)
+            message.relay_message()
 
     # otherwise this Message is not handled
-    # keep `processed_at` == None
+    # keep `processed_at` == None (pending)
+
+    # TODO: define signal for hooking mail based opertion
 
 
 def handle_default(message, **kwargs):
