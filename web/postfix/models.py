@@ -1,9 +1,6 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils.encoding import smart_str
 from django.core import serializers
-
-from email import message_from_string
 
 
 class BaseModel(models.Model):
@@ -44,6 +41,8 @@ class Domain(BaseModel):
         return domain
 
     def add_alias_address(self, user, alias_user=None):
+        if not self.alias_domain:
+            return
         src = '{0}@{1}'.format(user, self.domain)
         dst = '{0}@{1}'.format(alias_user or user, self.alias_domain.domain)
         alias = self.alias_set.filter(recipient=src).first()
