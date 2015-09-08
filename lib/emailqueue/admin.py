@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
+from django import forms
+
+import models
 
 
 class MailAddressAdmin(admin.ModelAdmin):
@@ -38,8 +41,22 @@ class MessageAdmin(admin.ModelAdmin):
     process_message.short_description = _('Process Message')
 
 
+class MailAdminForm(forms.ModelForm):
+    force_reset = forms.BooleanField(initial=False, required=False)
+
+    class Meta:
+        model = models.Mail
+        exclude = []
+
+    def save(self, *args, **kwargs):
+        if self.cleaned_data.get('force_reset', False):
+            self.instance.reset_status()
+        return super(MailAdminForm, self).save(*args, **kwargs)
+
+
 class MailAdmin(admin.ModelAdmin):
     raw_id_fields = ['sender', ]
+    form = MailAdminForm
 
 
 def register(app_fullname, admins, ignore_models=[]):

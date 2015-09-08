@@ -326,16 +326,23 @@ class MailQuerySet(models.QuerySet):
         )
 
 
-class Mail(BaseMail):
-    '''Mail Delivery Definition
+class MailStatus(models.Model):
+    '''Mail Status
     '''
-    name = models.CharField(
-        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
-        null=True, default=None, blank=True)
+    STATUS_DISABLED = 0
+    STATUS_QUEUED = 10
+    STATUS_SENDING = 20
+    STATUS_SENT = 30
+    STATUS = (
+        (STATUS_DISABLED, _('Disabled Mail'), ),
+        (STATUS_QUEUED, _('Queued Mail'), ),
+        (STATUS_SENDING, _('Sending Mail'), ),
+        (STATUS_SENT, _('Sent Mail'), ),
+    )
 
-    ctx = models.TextField(
-        _('Context Data'), help_text=_('Context Data Help'),
-        default=None, null=True, blank=True)
+    status = models.IntegerField(
+        _('Mail Status'), help_text=_('Mail Status Help'),
+        default=STATUS_DISABLED, choices=STATUS)
 
     due_at = models.DateTimeField(
         _('Due At'), help_text=_('Due At'),
@@ -354,29 +361,7 @@ class Mail(BaseMail):
         null=True, blank=True, default=None)
 
     class Meta:
-        verbose_name = _('Mail')
-        verbose_name_plural = _('Mail')
-
-    objects = MailQuerySet.as_manager()
-
-    def __unicode__(self):
-        return self.subject
-
-    def add_recipient(self, email):
-        '''Add an recipient email address to this Mail
-
-        - email is registered as a :ref:`emailqueue.models.MailAddress`
-          for bounce management.
-        '''
-        to, created = MailAddress.objects.get_or_create(email=email)
-        recipient, created = Recipient.objects.get_or_create(
-            mail=self, to=to,)
-        return recipient
-
-    def is_active(self, dt=None):
-        dt = dt or now()
-        return self.enabled and (
-            self.due_at is None or self.due_at <= dt)
+        abstract = True
 
     def update_due_at(self, days=0):
         '''Update due_at with `sleep_to` '''
@@ -422,6 +407,55 @@ class Mail(BaseMail):
                 return True
 
         return False
+
+    def is_active(self, dt=None):
+        '''Is active mail or not'''
+        dt = dt or now()
+        return all([
+            self.status == self.STATUS_QUEUED,
+            self.due_at is None or self.due_at <= dt,
+            self.sent_at is None])
+
+
+class Mail(BaseMail, MailStatus):
+    '''Mail Delivery Definition
+    '''
+    name = models.CharField(
+        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
+        null=True, default=None, blank=True)
+
+    ctx = models.TextField(
+        _('Context Data'), help_text=_('Context Data Help'),
+        default=None, null=True, blank=True)
+
+    class Meta:
+        verbose_name = _('Mail')
+        verbose_name_plural = _('Mail')
+
+    objects = MailQuerySet.as_manager()
+
+    def __unicode__(self):
+        return self.subject
+
+    def add_recipient(self, email):
+        '''Add an recipient email address to this Mail
+
+        - email is registered as a :ref:`emailqueue.models.MailAddress`
+          for bounce management.
+        '''
+        to, created = MailAddress.objects.get_or_create(email=email)
+        recipient, created = Recipient.objects.get_or_create(
+            mail=self, to=to,)
+        return recipient
+
+    def reset_status(self):
+        self.recipient_set.all().update(sent_at=None)
+        self.sent_at = None
+
+    def send_mail(self):
+        '''Send Mail'''
+        if self.sender.server and self.sender.server.handler:
+            self.sender.server.handler.send_mail(self)
 
 
 class RecipientQuerySet(models.QuerySet):

@@ -7,3 +7,6 @@ from django.utils.translation import (
 class AppConfig(DjangoAppConfig):
     name = 'emailqueue'
     verbose_name = _("Emailqueue")
+
+    def ready(self):
+        import tasks        # NOQA

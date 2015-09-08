@@ -75,7 +75,7 @@ def send_mail(mail, recipients=None):
         logger.debug("No Server for {0}".format(mail.sender.domain))
         return
 
-    if mail.sent_at:
+    if mail.sent_at and mail.status != mail.STATUS_SENDING:
         # Already completed
         logger.warn("This message has been already processed")
         return
@@ -120,6 +120,7 @@ def send_mail(mail, recipients=None):
         server.wait()
 
     # completed sending
+    mail.status = mail.STATUS_SENT
     mail.sent_at = now()
     mail.save()
 
@@ -230,6 +231,9 @@ class Handler(queue_tasks.Handler):
         If `recipients` is None, :ref:`emailqueue.models.Recipient`
         of this Mail are used.
         '''
+        mail.status = mail.STATUS_SENDING
+        mail.save()
+
         send_mail.apply_async(
             args=[mail.id, recipients],
             eta=make_eta(due_at or mail.due_at))
