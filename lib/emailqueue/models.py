@@ -221,14 +221,10 @@ class Relay(BaseModel):
             self.id, message.id,)
 
 
-class MailTemplate(BaseModel):
+class BaseMail(BaseModel):
     sender = models.ForeignKey(
         Postbox,
         verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
-
-    name = models.CharField(
-        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
-        unique=True, db_index=True)
 
     subject = models.TextField(
         _('Mail Subject'), help_text=_('Mail Subject Help'), )
@@ -237,8 +233,78 @@ class MailTemplate(BaseModel):
         _('Mail Body'), help_text=_('Mail Body Help'), )
 
     class Meta:
+        abstract = True
+
+    @property
+    def subtype(self):
+        # TODO: SHOULD BE configurable
+        return 'plain'
+
+    def rendered_message(self, mail_address, **kwargs):
+        ''' MailAddress Object'''
+        return template.Template(self.body).render(
+            template.Context(dict(
+                kwargs, to=mail_address,
+            )))
+
+    def create_message(self, mail_address, encoding="utf-8",):
+        ''' MailAddress Object'''
+
+        # TODO: encoding depends on to.email domain actually
+        message_id = uuid.uuid1().hex
+
+        if encoding == 'utf-8':
+            pass
+        elif encoding == "shift_jis":
+            #: DoCoMo
+            #: TODO chekck message encoding and convert it
+            Charset.add_charset(
+                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
+            Charset.add_codec('shift_jis', 'cp932')
+
+        message = MIMEText(
+            self.rendered_message(mail_address), self.subtype, encoding)
+
+        message['Subject'] = self.subject
+        message['From'] = self.sender.address
+        message['To'] = mail_address.email
+        message['Message-ID'] = message_id
+
+        return message
+
+
+class MailTemplateQuerySet(models.QuerySet):
+    def load_for_name(self, name):
+        obj = self.filter(name=name).first()
+        if not obj:
+            source, path = utils.get_template_source(name)
+            text = source or "subject\nbody"
+            subject, text = text.split('\n', 1)
+
+            obj = self.objects.create(
+                name=name, subject=subject, text=text)
+
+        return obj
+
+
+class MailTemplate(BaseMail):
+    name = models.CharField(
+        _('Mail Name'), help_text=_('Mail Name Help'),  max_length=200,
+        unique=True, db_index=True)
+
+    class Meta:
         verbose_name = _('Mail Template')
         verbose_name_plural = _('Mail Template')
+
+    objects = MailTemplateQuerySet.as_manager()
+
+    def render_subject(self, **kwargs):
+        return template.Template(self.instance.subject).render(
+            template.Context(kwargs))
+
+    def render_body(self, **kwargs):
+        return template.Template(self.instance.text).render(
+            template.Context(kwargs))
 
 
 class MailQuerySet(models.QuerySet):
@@ -260,22 +326,12 @@ class MailQuerySet(models.QuerySet):
         )
 
 
-class Mail(BaseModel):
+class Mail(BaseMail):
     '''Mail Delivery Definition
     '''
-    sender = models.ForeignKey(
-        Postbox,
-        verbose_name=_('Mail Sender'), help_text=_('Mail Sender Help'))
-
     name = models.CharField(
         _('Mail Name'), help_text=_('Mail Name Help'),  max_length=50,
         null=True, default=None, blank=True)
-
-    subject = models.TextField(
-        _('Mail Subject'), help_text=_('Mail Subject Help'), )
-
-    body = models.TextField(
-        _('Mail Body'), help_text=_('Mail Body Help'), )
 
     ctx = models.TextField(
         _('Context Data'), help_text=_('Context Data Help'),
@@ -316,11 +372,6 @@ class Mail(BaseModel):
         recipient, created = Recipient.objects.get_or_create(
             mail=self, to=to,)
         return recipient
-
-    @property
-    def subtype(self):
-        # TODO: SHOULD BE configurable
-        return 'plain'
 
     def is_active(self, dt=None):
         dt = dt or now()
@@ -371,48 +422,6 @@ class Mail(BaseModel):
                 return True
 
         return False
-
-    def rendered_message(self, mail_address):
-        ''' MailAddress Object'''
-        return template.Template(self.body).render(
-            template.Context(dict(
-                to=mail_address,
-                ctx={},         # TODO: deserialize Json
-            )))
-
-    def create_message(self, mail_address, encoding="utf-8",):
-        ''' MailAddress Object'''
-
-        # TODO: encoding depends on to.email domain actually
-        message_id = uuid.uuid1().hex
-
-        if encoding == 'utf-8':
-            pass
-        elif encoding == "shift_jis":
-            #: DoCoMo
-            #: TODO chekck message encoding and convert it
-            Charset.add_charset(
-                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
-            Charset.add_codec('shift_jis', 'cp932')
-
-        message = MIMEText(
-            self.rendered_message(mail_address), self.subtype, encoding)
-
-        message['Subject'] = self.subject
-        message['From'] = self.sender.address
-        message['To'] = mail_address.email
-        message['Message-ID'] = message_id
-
-        return message
-
-    def send_mail(self, recipients=None, due_at=None, *args, **kwargs):
-        ''' Send this Mail to all recipients
-        :param list(address) recipeints: if None, Recipient list is useed
-        :param datetime due_at: if None, self.due_at is used
-        '''
-        if self.sender and self.sender.server.handler:
-            self.sender.server.handler.send_mail(
-                self, recipients=None, due_at=None, *args, **kwargs)
 
 
 class RecipientQuerySet(models.QuerySet):
