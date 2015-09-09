@@ -9,20 +9,36 @@ import models
 
 class MailAddressAdmin(admin.ModelAdmin):
     search_fields = ['email', ]
+    list_filter = ('enabled', )
+    date_hierarchy = 'updated_at'
+    list_excludes = ('created_at', )
 
 
 class RecipientAdmin(admin.ModelAdmin):
     raw_id_fields = ['mail', 'to', ]
-    list_excludes = ('created_at', )
     date_hierarchy = 'sent_at'
+    list_filter = ('to__enabled', )
+    list_excludes = ('created_at', )
+    list_additionals = ('address_status', )
+
+    def address_status(self, obj):
+        return u"{0}({1})".format(
+            obj.to.enabled, obj.to.bounced,
+        )
+
+    address_status.short_description = _(u"Address Status")
+    address_status.allow_tags = True
 
 
 class PostboxAdmin(admin.ModelAdmin):
     raw_id_fields = ['forward', ]
+    list_excludes = ('created_at', )
+    list_filter = ('deleted', )
 
 
 class RelayAdmin(admin.ModelAdmin):
     raw_id_fields = ['sender', 'postbox', ]
+    list_excludes = ('created_at', )
 
 
 class ReportAdmin(admin.ModelAdmin):
@@ -64,6 +80,9 @@ class MailAdminForm(forms.ModelForm):
 
 class MailAdmin(admin.ModelAdmin):
     raw_id_fields = ['sender', ]
+    list_filter = ('status', )
+    list_excludes = ('created_at', )
+    date_hierarchy = 'sent_at'
     form = MailAdminForm
 
 
