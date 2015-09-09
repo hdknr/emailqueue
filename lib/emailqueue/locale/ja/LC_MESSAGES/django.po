@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-19 09:46+0000\n"
+"POT-Creation-Date: 2015-09-09 06:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,190 +18,376 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: admin.py:29
+msgid "Address Status"
+msgstr "有効"
+
+#: admin.py:58
+msgid "Process Message"
+msgstr ""
+
+#: admin.py:63
+msgid "Force Send This Mail"
+msgstr "強制送信"
+
 #: apps.py:9
 msgid "Emailqueue"
 msgstr "メール配信"
 
-#: models.py:34
+#: forms.py:36
+msgid "Recipients"
+msgstr "受信者"
+
+#: forms.py:42
+msgid "Is Testing Mail"
+msgstr "テスト送信"
+
+#: forms.py:43
+msgid "Is Tesing Mail Help"
+msgstr "メール"
+
+#: forms.py:48
+msgid "Scheduled DateTime to send"
+msgstr "送信指定日時"
+
+#: models.py:39
 msgid "Created At"
 msgstr "作成日時"
 
-#: models.py:35
+#: models.py:40
 msgid "Updated At"
 msgstr "更新日時"
 
-#: models.py:45
-msgid "Postbox Address"
-msgstr "アドレス"
+#: models.py:52
+msgid "Mail Service Name"
+msgstr "サービス名称"
 
-#: models.py:45
-msgid "Postbox Address Help"
-msgstr "アドレス"
+#: models.py:55
+msgid "Mail Domain Name"
+msgstr "ドメイン名"
 
-#: models.py:49
-msgid "Forwoard Address"
-msgstr "転送先"
+#: models.py:58
+msgid "Mail Backend"
+msgstr "バックエンド"
 
-#: models.py:49
-msgid "Forwoard Address Help"
-msgstr "転送先"
+#: models.py:62
+msgid "Service Handler"
+msgstr "サービスハンドラ"
 
-#: models.py:53
-msgid "Is Deleted"
-msgstr "削除済み"
+#: models.py:66
+msgid "Mail Server Settings"
+msgstr "サーバー設定"
 
-#: models.py:53
-msgid "Is Deleted Help"
-msgstr "削除済み"
+#: models.py:69
+msgid "Wait sending for every count"
+msgstr "待ち送信回数"
 
-#: models.py:56
-msgid "Postbox Task"
-msgstr "タスク"
+#: models.py:70
+msgid "Wait sending for every count help"
+msgstr "待ち送信回数"
 
-#: models.py:56
-msgid "Postbox Task Help"
-msgstr "タスク"
+#: models.py:74
+msgid "Wait milliseconds"
+msgstr "待ち時間(ms)"
 
-#: models.py:60
-msgid "Black List Pattern"
-msgstr "ブラックリストパターン"
+#: models.py:75
+msgid "Wait milliseconds help"
+msgstr "待ち時間(ms)"
 
-#: models.py:61
-msgid "Black List Pattern Help"
-msgstr "ブラックリストパターン"
+#: models.py:79 models.py:80
+msgid "Server"
+msgstr "サーバー"
 
-#: models.py:65 models.py:66 models.py:83
-msgid "Postbox"
-msgstr "メール転送"
-
-#: models.py:83
-msgid "Postbox Help"
-msgstr "メール転送"
-
-#: models.py:86
-msgid "Sender Address"
-msgstr "送信者"
-
-#: models.py:86
-msgid "Sender Address Help"
-msgstr "送信者"
-
-#: models.py:89
-msgid "Is Spammer"
-msgstr "スパマー"
-
-#: models.py:92 models.py:93
-msgid "Relay"
-msgstr "リレー記録"
-
-#: models.py:100
+#: models.py:107
 msgid "Email Address"
 msgstr "メールアドレス"
 
-#: models.py:101
+#: models.py:108
 msgid "Email Address Help"
 msgstr "メールアドレス"
 
-#: models.py:104 models.py:105
+#: models.py:111
+msgid "Bounced Count"
+msgstr "バウンス回数"
+
+#: models.py:112
+msgid "Bounced Count Help"
+msgstr "バウンス回数"
+
+#: models.py:115
+msgid "Enabled Address"
+msgstr "有効アドレス"
+
+#: models.py:115
+msgid "Enabled Address Help"
+msgstr "有効アドレス"
+
+#: models.py:119 models.py:120
 msgid "Mail Address"
 msgstr "メールアドレス"
 
-#: models.py:114 models.py:155
+#: models.py:146
+msgid "Sending Server"
+msgstr "送信サーバー"
+
+#: models.py:149
+msgid "Postbox Address"
+msgstr "アドレス"
+
+#: models.py:149
+msgid "Postbox Address Help"
+msgstr "アドレス"
+
+#: models.py:153
+msgid "Forward Address"
+msgstr "転送先"
+
+#: models.py:154
+msgid "Forward Address Help"
+msgstr "転送先"
+
+#: models.py:158
+msgid "Is Deleted"
+msgstr "削除済み"
+
+#: models.py:158
+msgid "Is Deleted Help"
+msgstr "削除済み"
+
+#: models.py:161
+msgid "Postbox Task"
+msgstr "タスク"
+
+#: models.py:161
+msgid "Postbox Task Help"
+msgstr "タスク"
+
+#: models.py:165
+msgid "Black List Pattern"
+msgstr "ブラックリストパターン"
+
+#: models.py:166
+msgid "Black List Pattern Help"
+msgstr "ブラックリストパターン"
+
+#: models.py:170 models.py:171
+msgid "Postbox"
+msgstr "メール転送"
+
+#: models.py:204
+msgid "Original Sender Address"
+msgstr "送信者"
+
+#: models.py:205
+msgid "Original Sender Address Help"
+msgstr "送信者"
+
+#: models.py:209
+msgid "Original Recipient Postbox"
+msgstr "受信者"
+
+#: models.py:210
+msgid "Original Recipient Postbox Help"
+msgstr "受信者"
+
+#: models.py:213
+msgid "Is Spammer"
+msgstr "スパマー"
+
+#: models.py:217 models.py:218
+msgid "Relay"
+msgstr "リレー記録"
+
+#: models.py:236
 msgid "Mail Sender"
 msgstr "メール送信者"
 
-#: models.py:114 models.py:155
+#: models.py:236
 msgid "Mail Sender Help"
 msgstr "送信者"
 
-#: models.py:117 models.py:158
-msgid "Mail Name"
-msgstr "メール名称"
-
-#: models.py:117 models.py:158
-msgid "Mail Name Help"
-msgstr "メール名称"
-
-#: models.py:121 models.py:162
+#: models.py:239
 msgid "Mail Subject"
 msgstr "表題"
 
-#: models.py:121 models.py:162
+#: models.py:239
 msgid "Mail Subject Help"
 msgstr "表題"
 
-#: models.py:124 models.py:165
+#: models.py:242
 msgid "Mail Body"
 msgstr "本文"
 
-#: models.py:124 models.py:165
+#: models.py:242
 msgid "Mail Body Help"
 msgstr "本文"
 
-#: models.py:127 models.py:128
+#: models.py:301 models.py:433
+msgid "Mail Name"
+msgstr "メール名称"
+
+#: models.py:301 models.py:433
+msgid "Mail Name Help"
+msgstr "メール名称"
+
+#: models.py:305 models.py:306
 msgid "Mail Template"
 msgstr "メールテンプレート"
 
-#: models.py:173
-msgid "Enabled"
-msgstr "有効"
+#: models.py:346
+msgid "Disabled Mail"
+msgstr ""
 
-#: models.py:176
+#: models.py:347
+msgid "Queued Mail"
+msgstr ""
+
+#: models.py:348
+msgid "Sending Mail"
+msgstr "テスト送信"
+
+#: models.py:349
+msgid "Sent Mail"
+msgstr "テスト送信"
+
+#: models.py:353
+msgid "Mail Status"
+msgstr "状態"
+
+#: models.py:353
+msgid "Mail Status Help"
+msgstr "状態"
+
+#: models.py:357
 msgid "Due At"
 msgstr "送信予定"
 
-#: models.py:180
-msgid "Sleep From"
-msgstr "停止開始時間"
-
-#: models.py:184
-msgid "Sleep To"
-msgstr "停止終了時間"
-
-#: models.py:188 models.py:189 models.py:309 models.py:334
-msgid "Mail"
-msgstr "メール"
-
-#: models.py:309 models.py:334
-msgid "Mail Help"
-msgstr "メール"
-
-#: models.py:311
-msgid "Recipient Address"
-msgstr "受信者アドレス"
-
-#: models.py:312
-msgid "Recipient Address Help"
-msgstr "受信者アドレス"
-
-#: models.py:315
-msgid "Return Path"
-msgstr "戻りアドレス"
-
-#: models.py:315
-msgid "Return Path Help"
-msgstr "戻りアドレス(Return_Path)"
-
-#: models.py:318
+#: models.py:361 models.py:509
 msgid "Sent At"
 msgstr "送信日時"
 
-#: models.py:321 models.py:322
+#: models.py:365
+msgid "Sleep From"
+msgstr "停止開始時間"
+
+#: models.py:369
+msgid "Sleep To"
+msgstr "停止終了時間"
+
+#: models.py:437
+msgid "Context Data"
+msgstr ""
+
+#: models.py:437
+msgid "Context Data Help"
+msgstr ""
+
+#: models.py:441 models.py:442 models.py:498 models.py:543
+msgid "Mail"
+msgstr "メール"
+
+#: models.py:498 models.py:543
+msgid "Mail Help"
+msgstr "メール"
+
+#: models.py:501
+msgid "Recipient Address"
+msgstr "受信者アドレス"
+
+#: models.py:502
+msgid "Recipient Address Help"
+msgstr "受信者アドレス"
+
+#: models.py:505
+msgid "Return Path"
+msgstr "戻りアドレス"
+
+#: models.py:505
+msgid "Return Path Help"
+msgstr "戻りアドレス(Return_Path)"
+
+#: models.py:512
+msgid "Bounced Error Message"
+msgstr "エラーメール"
+
+#: models.py:513
+msgid "Bounced Error Message Help"
+msgstr "エラーメール"
+
+#: models.py:518 models.py:519 models.py:679
 msgid "Recipient"
 msgstr "受信者"
 
-#: models.py:337
+#: models.py:546
 msgid "Attachment File"
 msgstr "添付ファイル"
 
-#: models.py:338
+#: models.py:547
 msgid "Attrachment File Help"
 msgstr "添付ファイル"
 
-#: models.py:341 models.py:342
+#: models.py:550 models.py:551
 msgid "Attachment"
 msgstr "添付ファイル"
+
+#: models.py:556
+msgid "Raw Message Text"
+msgstr ""
+
+#: models.py:556
+msgid "Raw Message Text Help"
+msgstr ""
+
+#: models.py:618
+msgid "Forwarding Relay"
+msgstr ""
+
+#: models.py:667
+msgid "Recipient Server"
+msgstr "受信者サーバー"
+
+#: models.py:671
+msgid "Service Name"
+msgstr "サービス名"
+
+#: models.py:671
+msgid "Service Name Help"
+msgstr "メール名称"
+
+#: models.py:675
+msgid "Sender"
+msgstr "メール送信者"
+
+#: models.py:675
+msgid "Sender Help"
+msgstr "送信者"
+
+#: models.py:679
+msgid "Recipient Help"
+msgstr "受信者"
+
+#: models.py:683
+msgid "Original Recipient"
+msgstr "受信者"
+
+#: models.py:684
+msgid "Oringinal Recipient Help"
+msgstr "受信者"
+
+#: models.py:688
+msgid "Processed At"
+msgstr "処理日時"
+
+#: models.py:691 models.py:692
+msgid "Message"
+msgstr "受信メール"
 
 #: templates/admin/emailqueue/mail/change_form.html:6
 msgid "Send Test Mail"
 msgstr "テスト送信"
+
+#~ msgid "Postbox Help"
+#~ msgstr "メール転送"
+
+#~ msgid "Enabled"
+#~ msgstr "有効"

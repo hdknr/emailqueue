@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-19 09:58+0000\n"
+"POT-Creation-Date: 2015-09-09 06:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,78 +26,80 @@ msgstr "本文"
 msgid "Emailsmtp"
 msgstr "SMTP送信"
 
-#: forms.py:32
-msgid "Recipients"
-msgstr "受信者"
-
-#: forms.py:37
-msgid "Is Testing Mail"
-msgstr "テストメール"
-
-#: forms.py:41
-msgid "Scheduled DateTime to send"
-msgstr "送信予定日時"
-
-#: models.py:14
-msgid "Mail Service Name"
-msgstr "メールサービス名"
+#: models.py:13 models.py:26 models.py:27
+msgid "Domain"
+msgstr "ドメイン"
 
 #: models.py:17
-msgid "Mail Domain Name"
-msgstr "ドメイン名"
+msgid "Transport"
+msgstr "トランスポート"
 
-#: models.py:20
-msgid "Mail Backend"
-msgstr "バックエンド"
+#: models.py:21
+msgid "Alias Transport"
+msgstr "エイリアストランスポート"
 
-#: models.py:24
-msgid "Wait sending for every count"
-msgstr "送信ごとの待ち時間"
-
-#: models.py:25
-msgid "Wait sending for every count help"
-msgstr "送信ごとの待ち時間(ミリ秒)"
-
-#: models.py:29
-msgid "Wait milliseconds"
-msgstr "待ち時間(ミリ秒)"
-
-#: models.py:30
-msgid "Wait milliseconds help"
-msgstr "待ち時間(ミリ秒)"
-
-#: models.py:34 models.py:35
-msgid "SMTP Server"
-msgstr "SMTPサーバー"
-
-#: models.py:54
-msgid "Sender"
-msgstr "送信者"
-
-#: models.py:54
-msgid "Sender Help"
-msgstr "送信者"
-
-#: models.py:57
-msgid "Recipient"
+#: models.py:62
+msgid "Recipient Address"
 msgstr "受信者"
 
-#: models.py:57
-msgid "Recipient Help"
-msgstr "受信者"
+#: models.py:66
+msgid "Forward Address"
+msgstr "転送アドレス"
 
-#: models.py:60
-msgid "Raw Message Text"
-msgstr "メールメッセージデータ"
+#: models.py:70 models.py:71
+msgid "Alias"
+msgstr "エイリアス"
 
-#: models.py:60
-msgid "Raw Message Text Help"
-msgstr "メールメッセージデータ"
+#~ msgid "Is Testing Mail"
+#~ msgstr "テストメール"
 
-#: models.py:64
-msgid "Processed At"
-msgstr "処理日時"
+#~ msgid "Scheduled DateTime to send"
+#~ msgstr "送信予定日時"
 
-#: models.py:67 models.py:68
-msgid "Inbound"
-msgstr "受信メッセージ"
+#~ msgid "Mail Service Name"
+#~ msgstr "メールサービス名"
+
+#~ msgid "Mail Domain Name"
+#~ msgstr "ドメイン名"
+
+#~ msgid "Mail Backend"
+#~ msgstr "バックエンド"
+
+#~ msgid "Wait sending for every count"
+#~ msgstr "送信ごとの待ち時間"
+
+#~ msgid "Wait sending for every count help"
+#~ msgstr "送信ごとの待ち時間(ミリ秒)"
+
+#~ msgid "Wait milliseconds"
+#~ msgstr "待ち時間(ミリ秒)"
+
+#~ msgid "Wait milliseconds help"
+#~ msgstr "待ち時間(ミリ秒)"
+
+#~ msgid "SMTP Server"
+#~ msgstr "SMTPサーバー"
+
+#~ msgid "Sender"
+#~ msgstr "送信者"
+
+#~ msgid "Sender Help"
+#~ msgstr "送信者"
+
+#~ msgid "Recipient"
+#~ msgstr "受信者"
+
+#~ msgid "Recipient Help"
+#~ msgstr "受信者"
+
+#~ msgid "Raw Message Text"
+#~ msgstr "メールメッセージデータ"
+
+#~ msgid "Raw Message Text Help"
+#~ msgstr "メールメッセージデータ"
+
+#~ msgid "Processed At"
+#~ msgstr "処理日時"
+
+#~ msgid "Inbound"
+#~ msgstr "受信メッセージ"
