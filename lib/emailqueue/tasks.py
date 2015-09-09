@@ -32,6 +32,7 @@ def handle_mail(message, handler=None, domain=None, args=(), **kwargs):
         ):
             recipient.error_message = message
             recipient.save()
+            recipient.to.bounce()       # bounce count up
 
     message.processed_at = now()
     message.save()
