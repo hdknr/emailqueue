@@ -33,7 +33,8 @@ class RecipientAdmin(admin.ModelAdmin):
 class PostboxAdmin(admin.ModelAdmin):
     raw_id_fields = ['forward', ]
     list_excludes = ('created_at', )
-    list_filter = ('deleted', )
+    list_filter = ('server', 'deleted', )
+    search_fields = ('address', 'forward__email', )
 
 
 class RelayAdmin(admin.ModelAdmin):
