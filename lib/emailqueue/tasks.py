@@ -21,14 +21,17 @@ def get_message_instance(message):
 
 def handle_mail(message, handler=None, domain=None, args=(), **kwargs):
     '''This message was bounced error :ref:`emailqueue.models.Mail`
+    args[0]     : Mail.id
+    args[1]     : MailAddress.id
     '''
     if len(args) > 1:
         # Bounced count up
-        for ma in models.MailAddress.objects.filter(
-            id=args[1], recipient__mail__id=args[0]
+        for recipient in models.Recipient.objects.filter(
+            mail__id=args[0],
+            to__id=args[1],
         ):
-            ma.bounced = ma.bounced + 1
-            ma.save()
+            recipient.error_message = message
+            recipient.save()
 
     message.processed_at = now()
     message.save()

@@ -14,4 +14,5 @@ class AppConfig(DjangoAppConfig):
     verbose_name = _("Application")
 
     def ready(self):
+        import tasks        # NOQA
         self.celery = celery.app

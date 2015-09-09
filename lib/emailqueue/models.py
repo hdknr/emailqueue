@@ -7,6 +7,7 @@ from django.utils.timezone import now, localtime
 from django.utils.encoding import smart_str
 from django import template
 from django.core import serializers
+from django.dispatch import dispatcher
 
 import pydoc
 import uuid
@@ -128,6 +129,14 @@ class MailAddress(BaseModel):
             return self._domain
 
         return getattr(self, '_domain', _cached())
+
+    bounced_signal = dispatcher.Signal(providing_args=["instance", ])
+
+    def bounce(self):
+        self.bounced += 1
+        self.save()
+        self.bounced_signal.send(
+            sender=MailAddress, instance=self)
 
 
 class Postbox(BaseModel):
@@ -487,6 +496,7 @@ class Recipient(BaseModel):
     '''
     mail = models.ForeignKey(
         Mail, verbose_name=_('Mail'), help_text=_('Mail Help'))
+
     to = models.ForeignKey(
         MailAddress, verbose_name=_('Recipient Address'),
         help_text=_('Recipient Address Help'))
@@ -494,8 +504,15 @@ class Recipient(BaseModel):
     return_path = models.EmailField(
         _('Return Path'), help_text=_('Return Path Help'), max_length=50,
         null=True, default=None, blank=True)
+
     sent_at = models.DateTimeField(
         _('Sent At'), null=True, blank=True, default=None)
+
+    error_message = models.ForeignKey(
+        'Message', verbose_name=_('Bounced Error Message'),
+        help_text=_('Bounced Error Message Help'),
+        related_name='bounced_recipient',
+        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
 
     class Meta:
         verbose_name = _('Recipient')
@@ -701,58 +718,3 @@ class Message(BaseModel, MailMessage, RelayedMessage):
         ''' Process this Message '''
         if self.server and self.server.handler:
             self.server.handler.process_message(self)
-
-
-class ReportQuerySet(models.QuerySet):
-    def create_from_message(self, message):
-        params = message.bounced_parameters
-        if not params:
-            return None
-
-        try:
-            address = MailAddress.objects.get(id=params['to'])
-
-            report, created = self.objects.get_or_create(
-                address=address, bounce=message,
-                mail=Mail.objects.get(id=params['msg']))
-
-            if created:
-                address.bounced = address.bounced + 1
-                address.save()
-                report.action = message.dsn_action
-                report.status = message.dsn_status
-                report.save()
-            return report
-        except:
-            pass
-        return None
-
-
-class Report(BaseModel):
-    address = models.ForeignKey(
-        MailAddress, verbose_name=_('Mail Address'),
-        help_text=_('Mail Address Help'))
-
-    mail = models.ForeignKey(
-        Mail, verbose_name=_('Mail'),
-        help_text=_('Mail Help'),
-        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
-
-    bounce = models.ForeignKey(
-        Message, verbose_name=_('Bounce Message'),
-        help_text=_('Bounce Message Help'),
-        null=True, blank=True, default=None, on_delete=models.SET_DEFAULT)
-
-    action = models.CharField(
-        _('DNS Action'), help_text=_('DSN Action Help'),  max_length=10,
-        null=True, default=None, blank=True)
-
-    status = models.CharField(
-        _('DNS Status'), help_text=_('DSN Status Help'),  max_length=10,
-        null=True, default=None, blank=True)
-
-    class Meta:
-        verbose_name = _(u'Report')
-        verbose_name_plural = _(u'Report')
-
-    objects = ReportQuerySet.as_manager()
