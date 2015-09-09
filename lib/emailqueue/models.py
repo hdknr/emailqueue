@@ -450,12 +450,25 @@ class Mail(BaseMail, MailStatus):
 
     def reset_status(self):
         self.recipient_set.all().update(sent_at=None)
+        self.status = self.STATUS_QUEUED
         self.sent_at = None
 
     def send_mail(self):
         '''Send Mail'''
         if self.sender.server and self.sender.server.handler:
             self.sender.server.handler.send_mail(self)
+
+    def get_return_path_and_to(self, recipient):
+        if isinstance(recipient, basestring):
+            to = MailAddress.objects.get_or_create(
+                email=recipient)[0]
+            return_path = utils.to_return_path(
+                'adhoc', self.sender.domain, self.id, to.id)
+        if isinstance(recipient, Recipient) and recipient.mail == self:
+            to = recipient.to
+            return_path = recipient.return_path
+
+        return (return_path, to, )
 
 
 class RecipientQuerySet(models.QuerySet):

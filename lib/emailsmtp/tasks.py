@@ -11,12 +11,12 @@ from django.core.mail.backends.smtp import EmailBackend
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
+from datetime import timedelta
 import traceback
 
 from emailqueue import (
     models as queue_models,
     tasks as queue_tasks,
-    utils,
 )
 
 logger = get_task_logger(__name__)
@@ -24,16 +24,14 @@ logger = get_task_logger(__name__)
 BACKEND = getattr(settings, 'SMTP_EMAIL_BACKEND', settings.EMAIL_BACKEND)
 
 
-def make_eta(when):
+def make_eta(when=None):
     '''ETA(estimated time of arrival) time
 
         :param when:  :py:class:`datetime.datetime`
         :return: :py:class:`datetime.datetime` with timezone
     '''
-    if when:
-        return when.tzinfo and when or get_current_timezone().localize(when)
-    else:
-        return when
+    when = when or now()
+    return when.tzinfo and when or get_current_timezone().localize(when)
 
 
 def get_mail_instance(mail):
@@ -43,16 +41,17 @@ def get_mail_instance(mail):
                   or 'id' for instance
     :return: :ref:`emailqueue.models.Mail` instance
     '''
-    return isinstance(mail, queue_models.Mail) and mail or \
+    return isinstance(mail, queue_models.Mail) and \
+        queue_models.Mail.objects.get(id=mail.id) or \
         queue_models.Mail.objects.get(id=mail)
 
 
 def get_message_instance(message):
     ''' Find `emailqueue.models.Message` instance
 
-        :param mail: :ref:`emailqueue.models.Message` instance
+    :param mail: :ref:`emailqueue.models.Message` instance
                      or 'id' for instance
-        :return: :ref:`emailqueue.models.Message` instance
+    :return: :ref:`emailqueue.models.Message` instance
     '''
     return isinstance(message, queue_models.Message) and message or \
         queue_models.Message.objects.get(id=message)
@@ -64,27 +63,37 @@ def send_mail(mail, recipients=None):
 
     :param Mail mail:  :ref:`emailqueue.models.Mail` or id
     :param list(Email) recipients: List of adhoc recipients.
-
-    If `recipients` is not specified,
+            If `recipients` is not specified,
     :ref:`emailqueue.models.Recipient` list is used.
     '''
     mail = get_mail_instance(mail)
+    # mail.refresh_from_db()
 
     server = mail.sender.server
     if not server:
         logger.debug("No Server for {0}".format(mail.sender.domain))
         return
 
-    if mail.sent_at and mail.status != mail.STATUS_SENDING:
+    if mail.sent_at or mail.status == mail.STATUS_DISABLED:
         # Already completed
-        logger.warn("This message has been already processed")
+        logger.warn(u"{0} {1} {2} {3}".format(
+            u"This message has been already processed",
+            mail.sent_at, mail.status, mail.subject,
+        ))
         return
+
+    # BEGIN:
+    if mail.status != mail.STATUS_SENDING:
+        mail.status = mail.STATUS_SENDING
+        mail.save()         # post_save signle fires again
 
     # active_set:
     #   - recipients already sent (sent_at is not None)are NOT included
     recipients = recipients or mail.recipient_set.active_set()
 
     for recipient in recipients:
+
+        # INTERUPTED:
         if mail.delay():    # make this Mail pending state
             logger.info("Mail({0}) is delayed".format(mail.id))
             # enqueue another task
@@ -94,14 +103,12 @@ def send_mail(mail, recipients=None):
             # terminate this task
             return
 
-        if isinstance(recipient, basestring):
-            to = queue_models.MailAddress.objects.get_or_create(
-                email=recipient)[0]
-            return_path = utils.to_return_path(
-                'adhoc', mail.sender.domain, mail.id, to.id)
-        else:
-            to = recipient.to
-            return_path = recipient.return_path
+        return_path, to = mail.get_return_path_and_to(recipient)
+
+        if not return_path and not to:
+            logger.warn(u"recipient({0}) is not valid".format(
+                recipient))
+            continue
 
         if not to.enabled:
             logger.warn(u"{0} is disabled".format(to.__unicode__()))
@@ -119,7 +126,7 @@ def send_mail(mail, recipients=None):
 
         server.wait()
 
-    # completed sending
+    # END: completed sending
     mail.status = mail.STATUS_SENT
     mail.sent_at = now()
     mail.save()
@@ -148,14 +155,14 @@ def send_raw_message(
             store_raw_message(
                 return_path, recipients, raw_message, *args, **kwargs)
 
-    except Exception, e:
+    except:
         # catching all exceptions b/c it could be any number of things
         # depending on the backend
         logger.debug(traceback.format_exc())
         logger.warning(
             "{0}:Failed to send email message to {1}, retrying.".format(
                 'send_email_instring', recipients))
-        send_raw_message.retry(exc=e)
+        # send_raw_message.retry(exc=e)
 
 
 @shared_task
@@ -231,12 +238,12 @@ class Handler(queue_tasks.Handler):
         If `recipients` is None, :ref:`emailqueue.models.Recipient`
         of this Mail are used.
         '''
-        mail.status = mail.STATUS_SENDING
-        mail.save()
 
-        send_mail.apply_async(
-            args=[mail.id, recipients],
-            eta=make_eta(due_at or mail.due_at))
+        eta = make_eta(due_at or mail.due_at) + timedelta(seconds=1)
+        # WARNING:
+        #   timedelta to wait the transaction for `mail` will be commited
+
+        send_mail.apply_async(args=[mail.id, recipients], eta=eta)
 
     def relay_message(self, message):
         send_raw_message(message.relay_return_path,

@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from celery import shared_task
 from django.utils.timezone import now
-from django.dispatch import receiver
-from django.db.models import signals
 
 
 from emailqueue import models
@@ -108,14 +106,6 @@ def process_message(message):
      }.get(params['handler'],
            handle_default
            )(message=message, **params)
-
-
-@receiver(signals.post_save, sender=models.Mail)
-def on_mail_saved(instance, *args, **kwargs):
-    if instance.is_active():
-        instance.send_mail()
-    else:
-        print "not active"
 
 
 class Handler(object):

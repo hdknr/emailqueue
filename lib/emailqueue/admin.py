@@ -3,6 +3,7 @@ from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
 from django import forms
 
+
 import models
 
 
@@ -42,16 +43,23 @@ class MessageAdmin(admin.ModelAdmin):
 
 
 class MailAdminForm(forms.ModelForm):
-    force_reset = forms.BooleanField(initial=False, required=False)
+    force_send = forms.BooleanField(
+        label=_('Force Send This Mail'), initial=False, required=False)
 
     class Meta:
         model = models.Mail
         exclude = []
 
     def save(self, *args, **kwargs):
-        if self.cleaned_data.get('force_reset', False):
+        if self.cleaned_data.get('force_send', False):
             self.instance.reset_status()
-        return super(MailAdminForm, self).save(*args, **kwargs)
+
+        instance = super(MailAdminForm, self).save(*args, **kwargs)
+
+        if self.cleaned_data.get('force_send', False):
+            self.instance.send_mail()
+
+        return instance
 
 
 class MailAdmin(admin.ModelAdmin):
