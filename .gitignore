@@ -3,6 +3,7 @@
 .*.swp
 *.sqlite3
 web/static/
+web/logs/
 .ropeproject
 migrations
 assets
