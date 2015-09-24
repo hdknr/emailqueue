@@ -7,3 +7,9 @@
 {% endif %}
 {{ block.super }}
 {% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<style type="text/css">
+ul#id_status li { display:inline; } //ステータス RadioSelect 
+</style>
+{% endblock %}
