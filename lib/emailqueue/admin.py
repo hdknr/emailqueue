@@ -87,6 +87,10 @@ class MailAdmin(admin.ModelAdmin):
     form = MailAdminForm
 
 
+class MailTemplateAdmin(admin.ModelAdmin):
+    raw_id_fields = ['sender', ]
+
+
 def register(app_fullname, admins, ignore_models=[]):
     app_label = app_fullname.split('.')[-2:][0]
     for n, model in apps.get_app_config(app_label).models.items():
