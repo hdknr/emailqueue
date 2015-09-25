@@ -4,6 +4,7 @@
 *.sqlite3
 web/static/
 web/logs/
+web/upload/
 .ropeproject
 migrations
 assets

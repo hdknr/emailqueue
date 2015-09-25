@@ -86,10 +86,14 @@ INSTALLED_APPS += (
     'emailsmtp',
     'emailqueue',
     'emailses',
+    'djuploader',
     'gunicorn',     # python manage.py run_gunicorn
+    'kombu.transport.django',
+)
+
+INSTALLED_APPS += (
     'alumni',
     'circles',
-    'kombu.transport.django',
 )
 
 DATABASES['default'] = {
