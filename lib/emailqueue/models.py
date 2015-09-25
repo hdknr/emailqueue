@@ -358,15 +358,15 @@ class MailStatus(models.Model):
         null=True, blank=True, default=None)
 
     sent_at = models.DateTimeField(
-        _('Sent At'), help_text=_('Sent At'),
+        _('Sent At'), help_text=_('Sent At Help'),
         null=True, blank=True, default=None)
 
     sleep_from = models.TimeField(
-        _('Sleep From'), help_text=_('Sleep From'),
+        _('Sleep From'), help_text=_('Sleep From Help'),
         null=True, blank=True, default=None)
 
     sleep_to = models.TimeField(
-        _('Sleep To'), help_text=_('Sleep To'),
+        _('Sleep To'), help_text=_('Sleep To Help'),
         null=True, blank=True, default=None)
 
     class Meta:
@@ -506,7 +506,8 @@ class Recipient(BaseModel):
         null=True, default=None, blank=True)
 
     sent_at = models.DateTimeField(
-        _('Sent At'), null=True, blank=True, default=None)
+        _('Sent At to Reipient'), help_text=_('Sent At to Recipient Help'),
+        null=True, blank=True, default=None)
 
     error_message = models.ForeignKey(
         'Message', verbose_name=_('Bounced Error Message'),

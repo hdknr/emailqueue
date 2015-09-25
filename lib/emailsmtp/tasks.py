@@ -106,13 +106,18 @@ def send_mail(mail, recipients=None):
         return_path, to = mail.get_return_path_and_to(recipient)
 
         if not return_path and not to:
-            logger.warn(u"recipient({0}) is not valid".format(
-                recipient))
+            logger.warn(u"recipient({0}) is not valid".format(recipient))
             continue
 
         if not to.enabled:
             logger.warn(u"{0} is disabled".format(to.__unicode__()))
             continue
+
+        mail.refresh_from_db()
+        if mail.status != mail.STATUS_SENDING:
+            logger.warn(u"Sending Mail({0}) has been interrupted".format(
+                mail.id))
+            return
 
         send_raw_message(
             return_path,

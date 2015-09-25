@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-09 06:30+0000\n"
+"POT-Creation-Date: 2015-09-24 23:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,17 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: admin.py:29
+#: admin.py:19
+msgid "Force Reset Recipient"
+msgstr "送信リセット"
+
+#: admin.py:20
+msgid "Force Reset Recipient Help"
+msgstr "再度送信可能にします。"
+
+#: admin.py:49
 msgid "Address Status"
 msgstr "有効"
 
-#: admin.py:58
+#: admin.py:55
+msgid "Reset Recipients"
+msgstr "送信リセット"
+
+#: admin.py:84
 msgid "Process Message"
 msgstr ""
 
-#: admin.py:63
+#: admin.py:89
 msgid "Force Send This Mail"
 msgstr "強制送信"
+
+#: admin.py:90
+msgid "Force Send This Mail Help"
+msgstr "送信済みの宛先も再度送信されます。"
 
 #: apps.py:9
 msgid "Emailqueue"
@@ -236,19 +252,19 @@ msgstr "メールテンプレート"
 
 #: models.py:346
 msgid "Disabled Mail"
-msgstr ""
+msgstr "送信状態:停止"
 
 #: models.py:347
 msgid "Queued Mail"
-msgstr ""
+msgstr "送信状態:送信待ち"
 
 #: models.py:348
 msgid "Sending Mail"
-msgstr "テスト送信"
+msgstr "送信状態:送信中"
 
 #: models.py:349
 msgid "Sent Mail"
-msgstr "テスト送信"
+msgstr "送信状態:完了"
 
 #: models.py:353
 msgid "Mail Status"
@@ -262,17 +278,29 @@ msgstr "状態"
 msgid "Due At"
 msgstr "送信予定"
 
-#: models.py:361 models.py:509
+#: models.py:361
 msgid "Sent At"
 msgstr "送信日時"
 
+#: models.py:361
+msgid "Sent At Help"
+msgstr "メールが送信された日時です。記録がないと送信が完了していません。"
+
 #: models.py:365
 msgid "Sleep From"
-msgstr "停止開始時間"
+msgstr "停止時間帯:開始"
+
+#: models.py:365
+msgid "Sleep From Help"
+msgstr "この時間なると送信を一時停止します"
 
 #: models.py:369
 msgid "Sleep To"
-msgstr "停止終了時間"
+msgstr "停止時間帯:終了"
+
+#: models.py:369
+msgid "Sleep To Help"
+msgstr "この時間から送信を再開します"
 
 #: models.py:437
 msgid "Context Data"
@@ -282,11 +310,11 @@ msgstr ""
 msgid "Context Data Help"
 msgstr ""
 
-#: models.py:441 models.py:442 models.py:498 models.py:543
+#: models.py:441 models.py:442 models.py:498 models.py:544
 msgid "Mail"
 msgstr "メール"
 
-#: models.py:498 models.py:543
+#: models.py:498 models.py:544
 msgid "Mail Help"
 msgstr "メール"
 
@@ -304,81 +332,89 @@ msgstr "戻りアドレス"
 
 #: models.py:505
 msgid "Return Path Help"
-msgstr "戻りアドレス(Return_Path)"
+msgstr "戻りアドレス(Return_Path)。ブランクで保存すると自動的に設定されます。"
 
-#: models.py:512
+#: models.py:509
+msgid "Sent At to Reipient"
+msgstr "送信日時記録"
+
+#: models.py:509
+msgid "Sent At to Recipient Help"
+msgstr "まだ転送されていないと指定されていません。"
+
+#: models.py:513
 msgid "Bounced Error Message"
 msgstr "エラーメール"
 
-#: models.py:513
+#: models.py:514
 msgid "Bounced Error Message Help"
-msgstr "エラーメール"
+msgstr "エラーがないと指定されていません。"
 
-#: models.py:518 models.py:519 models.py:679
+#: models.py:519 models.py:520 models.py:680
 msgid "Recipient"
 msgstr "受信者"
 
-#: models.py:546
+#: models.py:547
 msgid "Attachment File"
 msgstr "添付ファイル"
 
-#: models.py:547
+#: models.py:548
 msgid "Attrachment File Help"
 msgstr "添付ファイル"
 
-#: models.py:550 models.py:551
+#: models.py:551 models.py:552
 msgid "Attachment"
 msgstr "添付ファイル"
 
-#: models.py:556
+#: models.py:557
 msgid "Raw Message Text"
 msgstr ""
 
-#: models.py:556
+#: models.py:557
 msgid "Raw Message Text Help"
 msgstr ""
 
-#: models.py:618
+#: models.py:619
 msgid "Forwarding Relay"
 msgstr ""
 
-#: models.py:667
+#: models.py:668
 msgid "Recipient Server"
 msgstr "受信者サーバー"
 
-#: models.py:671
+#: models.py:672
 msgid "Service Name"
 msgstr "サービス名"
 
-#: models.py:671
+#: models.py:672
 msgid "Service Name Help"
 msgstr "メール名称"
 
-#: models.py:675
+#: models.py:676
 msgid "Sender"
 msgstr "メール送信者"
 
-#: models.py:675
+#: models.py:676
 msgid "Sender Help"
 msgstr "送信者"
 
-#: models.py:679
+#: models.py:680
 msgid "Recipient Help"
 msgstr "受信者"
 
-#: models.py:683
+#: models.py:684
 msgid "Original Recipient"
 msgstr "受信者"
 
-#: models.py:684
+#: models.py:685
 msgid "Oringinal Recipient Help"
 msgstr "受信者"
 
-#: models.py:688
+#: models.py:689
 msgid "Processed At"
 msgstr "処理日時"
 
-#: models.py:691 models.py:692
+#: models.py:692 models.py:693
 msgid "Message"
 msgstr "受信メール"
 
