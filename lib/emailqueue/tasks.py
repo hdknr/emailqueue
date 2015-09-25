@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from celery import shared_task
 from django.utils.timezone import now
-
+from django.dispatch import receiver
 
 from emailqueue import models
+from djuploader.models import UploadFile
+from djasync.signals import async_receiver
 
 import logging
 logger = logging.getLogger('emailqueue')
@@ -130,3 +132,15 @@ class Handler(object):
 
     def reverse_message(self, message, *args, **kwars):
         raise NotImplementedError
+
+
+@receiver(models.Recipient.uploaded_signal, sender=UploadFile)
+@async_receiver()
+def recipient_uploaded(instance, *args, **kwargs):
+    instance.clear()            # reset uploadfile errors
+    if not instance.parent:
+        return
+
+    for line, row, errors in instance.open():
+        if row.get('to', None):
+            instance.parent.add_recipient(row['to'])

@@ -526,6 +526,8 @@ class Recipient(BaseModel):
         verbose_name_plural = _('Recipient')
 
     objects = RecipientQuerySet.as_manager()
+    uploaded_signal = dispatcher.Signal(providing_args=["instance", ])
+    '''File Uploaded Signal'''
 
     def __unicode__(self):
         return self.to.__unicode__()

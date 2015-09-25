@@ -1,10 +1,30 @@
 from django.contrib import admin
 from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
-from django import forms
+from django import template, forms
+from django.utils.safestring import mark_safe as _S
+from django.core.urlresolvers import reverse
 
 
 import models
+
+
+def _T(src, **ctx):
+    return _S(template.Template(src).render(template.Context(ctx)))
+
+
+def model_link(model, parent=None):
+    url = reverse("admin:{0}_{1}_changelist".format(
+        model._meta.app_label,
+        model._meta.model_name,
+    ))
+    if parent:
+        r = [i.field.name for i in parent._meta.related_objects
+             if i.related_model == model]
+        if len(r) > 0:
+            url += "?{0}={1}".format(r[0], parent.id)
+    # finally returns url
+    return url
 
 
 class MailAddressAdmin(admin.ModelAdmin):
@@ -119,7 +139,16 @@ class MailAdmin(admin.ModelAdmin):
     list_excludes = ('created_at', )
     date_hierarchy = 'sent_at'
     form = MailAdminForm
-    readonly_fields = ('sent_at', )
+    readonly_fields = ('sent_at', 'recipients', )
+
+    def recipients(self, obj):
+        model = models.Recipient
+        link = model_link(model, obj)
+        return _T('''<a href="{{ u }}">{{ m.verbose_name }}</a>''',
+                  u=link, m=model._meta)
+
+    recipients.short_description = _("Recipeints")
+    recipients.allow_tags = True
 
 
 class MailTemplateAdmin(admin.ModelAdmin):
