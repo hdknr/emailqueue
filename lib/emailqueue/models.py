@@ -8,6 +8,8 @@ from django.utils.encoding import smart_str
 from django import template
 from django.core import serializers
 from django.dispatch import dispatcher
+from django.contrib.contenttypes.models import ContentType
+
 
 import pydoc
 import uuid
@@ -41,6 +43,10 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def contenttype(cls):
+        return ContentType.objects.get_for_model(cls)
 
     def to_fixture(self):
         return serializers.serialize(
