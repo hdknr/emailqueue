@@ -40,34 +40,39 @@ def install():
         long_description=read('README.rst'),
         scripts=glob.glob('scripts/*.py'),
         install_requires=requires(),
-        dependency_links=deps(),
     )
 
 import sys
 import os
 import glob
-import re
 
-DEP = re.compile(r'-e\s+(.+)#egg=(.+)')
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, 'lib'))
 
 
+def path(fname):
+    return os.path.join(BASE_DIR, fname)
+
+
 def read(fname):
-    return open(os.path.join(BASE_DIR, fname)).read()
+    return open(path(fname)).read()
 
 
 def lines(fname):
     return [line.strip()
-            for line in open(os.path.join(BASE_DIR, fname)).readlines()]
-
-
-def deps(i=1):
-    return [DEP.search(r).group(i) for r in lines("requirements/links.txt")]
+            for line in open(path(fname)).readlines()]
 
 
 def requires():
-    return lines("requirements/install.txt") + deps(2)
+    return lines("requirements/install.txt")
+
+
+def install_links():
+    VE = os.environ.get('VIRTUAL_ENV', None)
+    PIP = VE and os.path.join(VE, "bin/pip") or "pip"
+    os.system("{0} install -r {1}".format(PIP, path("requirements/links.txt")))
+
 
 if __name__ == '__main__':
+    install_links()
     install()
