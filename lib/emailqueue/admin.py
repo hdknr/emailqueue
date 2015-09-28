@@ -5,6 +5,7 @@ from django import template, forms
 from django.utils.safestring import mark_safe as _S
 from django.core.urlresolvers import reverse
 
+from djuploader.models import UploadModel
 
 import models
 
@@ -140,6 +141,16 @@ class MailAdmin(admin.ModelAdmin):
     date_hierarchy = 'sent_at'
     form = MailAdminForm
     readonly_fields = ('sent_at', 'recipients', )
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['upload_model'] = UploadModel.objects.get_or_create(
+            content_type=models.Recipient.contenttype(),
+            parent_content_type=models.Mail.contenttype(),
+        )[0]
+
+        return super(MailAdmin, self).change_view(
+            request, object_id, form_url=form_url, extra_context=extra_context)
 
     def recipients(self, obj):
         model = models.Recipient

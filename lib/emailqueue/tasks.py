@@ -138,9 +138,9 @@ class Handler(object):
 @async_receiver()
 def recipient_uploaded(instance, *args, **kwargs):
     instance.clear()            # reset uploadfile errors
-    if not instance.parent:
+    if not instance.parent_object:
         return
 
     for line, row, errors in instance.open():
         if row.get('to', None):
-            instance.parent.add_recipient(row['to'])
+            instance.parent_object.add_recipient(row['to'])

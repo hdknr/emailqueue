@@ -4,7 +4,7 @@
 {% block object-tools-items %}
 {% if object_id %}
   <li><a href="{% url 'emailqueue_send_mail' id=object_id %}">{% trans 'Send Test Mail' %}</a></li>
-  <li><a href="{% url 'admin:djuploader_uploadfile_add' %}?parent_content_type={{ content_type_id }}&parent_object_id={{ object_id }}&content_type={{ original.recipient_set.model.contenttype.id }}">{{ original }}:宛先アップロード</a></li>
+  <li><a href="{% url 'admin:djuploader_uploadfile_add' %}?upload={{ upload_model.id}}&parent_object_id={{ original.id}}">{{ original }}:宛先アップロード</a></li>
 {% endif %}
 {{ block.super }}
 {% endblock %}
