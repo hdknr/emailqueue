@@ -36,20 +36,31 @@ class MailAddressAdmin(admin.ModelAdmin):
 
 
 class RecipientAdminForm(forms.ModelForm):
-    force_reset = forms.BooleanField(
-        label=_('Force Reset Recipient'),
-        help_text=_('Force Reset Recipient Help'),
-        initial=False, required=False)
+    force_command = forms.ChoiceField(
+        label=_('Force Command'),
+        help_text=_('Force Command Help'),
+        choices=(
+            ('', '-------',),
+            ('reset', _('Force Reset'), ),
+            ('send', _('Force Send'), )
+        ),
+        required=False)
 
     class Meta:
         model = models.Recipient
         exclude = ['error_message', 'sent_at', ]
 
     def save(self, *args, **kwargs):
-        if self.cleaned_data.get('force_reset', False):
+        if self.cleaned_data.get('force_command', False) == 'reset':
             self.instance.sent_at = None
 
-        return super(RecipientAdminForm, self).save(*args, **kwargs)
+        instance = super(RecipientAdminForm, self).save(*args, **kwargs)
+
+        if self.cleaned_data.get('force_command', False) == 'send':
+            # TODO: force sending
+            instance.mail.send_mail([instance])
+
+        return instance
 
 
 class RecipientAdmin(admin.ModelAdmin):

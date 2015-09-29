@@ -9,14 +9,16 @@ from django import template
 from django.core import serializers
 from django.dispatch import dispatcher
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import EmailMultiAlternatives
 
 
 import pydoc
 import uuid
 import os
 from datetime import timedelta
-from email import Charset,  message_from_string
-from email.mime.text import MIMEText
+# from email import Charset,  message_from_string
+from email import message_from_string
+# from email.mime.text import MIMEText
 import time
 
 import utils
@@ -247,6 +249,10 @@ class BaseMail(BaseModel):
     body = models.TextField(
         _('Mail Body'), help_text=_('Mail Body Help'), )
 
+    html = models.TextField(
+        _('Mail HTML Body'), help_text=_('Mail HTML Body Help'),
+        null=True, blank=True, default=None)
+
     class Meta:
         abstract = True
 
@@ -256,36 +262,36 @@ class BaseMail(BaseModel):
         return 'plain'
 
     def rendered_message(self, mail_address, **kwargs):
-        ''' MailAddress Object'''
         return template.Template(self.body).render(
             template.Context(dict(
                 kwargs, to=mail_address,
             )))
 
-    def create_message(self, mail_address, encoding="utf-8",):
-        ''' MailAddress Object'''
+    def rendered_html(self, mail_address, **kwargs):
+        return template.Template(self.html).render(
+            template.Context(dict(
+                kwargs, to=mail_address,
+            )))
 
+    def create_message(self, mail_address, encoding="utf-8",):
         # TODO: encoding depends on to.email domain actually
         message_id = uuid.uuid1().hex
 
-        if encoding == 'utf-8':
-            pass
-        elif encoding == "shift_jis":
-            #: DoCoMo
-            #: TODO chekck message encoding and convert it
-            Charset.add_charset(
-                'shift_jis', Charset.QP, Charset.BASE64, 'shift_jis')
-            Charset.add_codec('shift_jis', 'cp932')
+        EmailMultiAlternatives.encoding = encoding
 
-        message = MIMEText(
-            self.rendered_message(mail_address), self.subtype, encoding)
+        message = EmailMultiAlternatives(
+            subject=self.subject,
+            body=self.rendered_message(mail_address),
+            from_email=self.sender.address,
+            to=[mail_address.email],            # list of tuple
+            headers={'Message-ID': message_id},
+        )
 
-        message['Subject'] = self.subject
-        message['From'] = self.sender.address
-        message['To'] = mail_address.email
-        message['Message-ID'] = message_id
+        if self.html:
+            message.attach_alternative(
+                self.rendered_html(mail_address), "text/html")
 
-        return message
+        return message.message()
 
 
 class MailTemplateQuerySet(models.QuerySet):
@@ -468,10 +474,10 @@ class Mail(BaseMail, MailStatus):
         self.status = self.STATUS_QUEUED
         self.sent_at = None
 
-    def send_mail(self):
+    def send_mail(self, *args, **kwargs):
         '''Send Mail'''
         if self.sender.server and self.sender.server.handler:
-            self.sender.server.handler.send_mail(self)
+            self.sender.server.handler.send_mail(self, *args, **kwargs)
 
     def get_return_path_and_to(self, recipient):
         if isinstance(recipient, basestring):
