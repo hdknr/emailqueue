@@ -141,6 +141,12 @@ def recipient_uploaded(instance, *args, **kwargs):
     if not instance.parent_object:
         return
 
+    instance.status = instance.STATUS_PROCESSING
+    instance.save()
+
     for line, row, errors in instance.open():
         if row.get('to', None):
             instance.parent_object.add_recipient(row['to'])
+
+    instance.status = instance.STATUS_COMPLETED
+    instance.save()
