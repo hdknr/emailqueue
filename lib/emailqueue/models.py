@@ -621,6 +621,10 @@ class MailMessage(models.Model):
         except:
             return None
 
+    def save_to_file(self, path):
+        with open(path, 'w') as out:
+            out.write(self.mailobject.as_string())
+
 
 class RelayedMessage(models.Model):
     relay = models.ForeignKey(
