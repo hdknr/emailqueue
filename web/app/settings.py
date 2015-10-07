@@ -80,6 +80,7 @@ STATIC_URL = '/static/'
 LANGUAGE_CODE = 'ja'
 TIME_ZONE = 'Asia/Tokyo'
 STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 INSTALLED_APPS += (
     'app',
