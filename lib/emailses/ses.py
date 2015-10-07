@@ -1,5 +1,3 @@
-from emailqueue.services import Api as ServiceApi
-from emailqueue.models import Notification, Service, BounceLog
 import boto
 import json
 import requests
@@ -18,19 +16,36 @@ NOTIFICATION_SIGNING_INPUT_KEY = [
     "Type",
 ]
 
-NOTIFICATION_SIGNING_INPUT = lambda jobj:\
-    "".join([
+
+def NOTIFICATION_SIGNING_INPUT(jobj):
+    return "".join([
         "%s\n%s\n" % (k, jobj.get(k))
         for k in NOTIFICATION_SIGNING_INPUT_KEY
         if k in jobj
     ])
 
 
+def SIGNATURE(jobj):
+    return jobj['Signature']
+
+
+def CERT_URL(jobj):
+    return jobj['SigningCertURL']
+
+
+def TOPIC(jobj):
+    return jobj.get('TopicArn', '')
+
+
+def get_cert(url):
+    res = requests.get(url)
+    return res.text
+
+
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from Crypto.Util.asn1 import DerSequence
 from Crypto.Signature import PKCS1_v1_5
-#from Crypto.Util import number
 
 from base64 import b64decode, standard_b64decode
 
@@ -59,7 +74,7 @@ def verify_pycrypto(pem, signing_input, b64signature):
     return verifier.verify(dig, sig)
 
 
-class Api(ServiceApi):
+class Api(object):
     name = "Amazon SES"
 
     def __init__(self, service):
@@ -86,7 +101,8 @@ class Api(ServiceApi):
         self.connection.verify_email_address(address)
 
     def notify_path(self):
-        return SnsResource().get_resource_uri() + "%d/" % self.service.id
+        # return SnsResource().get_resource_uri() + "%d/" % self.service.id
+        return ''
 
     def verify_notification(self, notification):
         jobj = notification.json_message
@@ -122,22 +138,5 @@ class Api(ServiceApi):
                     self.service.bounceaddress_set.get_or_create(
                         address=addr
                     )
-                BounceLog(address=address, message=json.dumps(bounce)).save()
+                # BounceLog(address=address, message=json.dumps(bounce)).save()
                 # TODO: recalcualte BounceAddress count
-
-
-from tastypie.resources import Resource
-from tastypie.http import HttpCreated
-
-
-class SnsResource(Resource):
-
-    class Meta:
-        allowed_methods = ['post', ]
-        resource_name = 'sns'
-
-    def post_detail(self, request, pk=None, resource_name=None, **kwargs):
-        Notification(
-            service=Service.objects.get(id=pk),
-            message=request.body).save()
-        return HttpCreated()
