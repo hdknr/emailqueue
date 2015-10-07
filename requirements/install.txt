@@ -3,3 +3,5 @@ MySQL-python
 enum34
 Celery
 requests
+boto
+django-ses

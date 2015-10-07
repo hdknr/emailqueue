@@ -1,6 +1,6 @@
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseBadRequest, HttpResponse
-import json
+import models
+from django_ses.views import handle_bounce
 
 
 def verify_message(msg):
@@ -17,26 +17,10 @@ def process_notification(msg):
 
 @csrf_exempt
 def bounce(request):
-    msg = {}
+    # Log
+    models.Notification.objects.create(request.META, request.body)
 
-    try:
-        msg = json.loads(request.body)
-        # TODO: verify msg
-        verify_message(msg)
-    except:
-        return HttpResponseBadRequest('bad request')
-
-    if msg.get('Type', '') == 'SubscriptionConfirmation':
-        if process_subscription(msg):
-            return HttpResponse('SubscriptionConfirmation OK')
-        else:
-            return HttpResponse('SubscriptionConfirmation Failed')
-
-    elif msg.get('Type', '') == 'Notification':
-        process_notification(msg)
-        return HttpResponse(json.dumps({'error': 0, 'msg': msg}))
-
-    return HttpResponseBadRequest('No Type')
+    return handle_bounce(request)
 
 
 @csrf_exempt
