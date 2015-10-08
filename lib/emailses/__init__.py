@@ -5,3 +5,5 @@ __build__ = ''
 
 def get_version():
     return '.'.join(map(lambda v: str(v), __version__))
+
+default_app_config = 'emailses.apps.AppConfig'

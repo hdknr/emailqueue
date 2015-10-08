@@ -1,3 +1,4 @@
+from django.dispatch import dispatcher
 import json
 from datetime import datetime
 from enum import Enum
@@ -71,6 +72,10 @@ class Source(object):
 
 
 class Notification(object):
+    bounce_signal = dispatcher.Signal(providing_args=["instance", ])
+    delivery_signal = dispatcher.Signal(providing_args=["instance", ])
+    complaint_signal = dispatcher.Signal(providing_args=["instance", ])
+    confirm_signal = dispatcher.Signal(providing_args=["instance", ])
 
     @property
     def message_object(self):
@@ -107,34 +112,24 @@ class Notification(object):
         cert = self.cert
         return self.message_object.verify(cert.cert)
 
-    def process(self):
-        dict(
-            SubscriptionConfirmation=self.do_confirm,
-            UnsubscribeConfirmation=self.do_confirm,
-            Notification=self.do_notify,
-            Default=lambda: None,
-        ).get(ses.TYPE(self.message_object.Type), 'Default')()
+    def signal(self):
+        signal = None
+        if self.message_object.Type in [
+            'SubscriptionConfirmation', 'UnsubscribeConfirmation'
+        ]:
+            signal = self.confirm_signal
+        elif self.message_object.Type in ['Notification']:
+            signal = dict(
+                Complaint=self.complaint_signal,
+                Bounce=self.bounce_signal,
+                Delivery=self.delivery_signal,
+            ).get(self.message_object.Message.notificationType, None)
 
-    def do_confirm(self):
-        self.message_object.confirm_subscribe_url()
-
-    def do_notify(self):
-        msg = self.message_object.Message       # SesMessage
-        dict(
-            Bounce=self.do_payload_bounce,
-            Complaint=self.do_payload_complaint,
-            Default=self.do_payload_nothing,
-        ).get(msg.notificationType, 'Default')()
-        pass
-
-    def do_payload_bounce(self):
-        pass
-
-    def do_payload_complaint(self):
-        pass
-
-    def do_payload_nothing(self):
-        pass
+        try:
+            signal and signal.send(sender=type(self), instance=self)
+        except:
+            # TODO: error logging
+            pass
 
 
 class Certificate(object):

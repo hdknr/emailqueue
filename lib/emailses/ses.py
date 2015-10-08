@@ -1,5 +1,12 @@
 import json
 import requests
+from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA
+from Crypto.Util.asn1 import DerSequence
+from Crypto.Signature import PKCS1_v1_5
+
+from base64 import b64decode, standard_b64decode
+
 
 # http://docs.aws.amazon.com/sns/latest/dg/
 # SendMessageToHttp.verify.signature.html
@@ -22,14 +29,6 @@ def NOTIFICATION_SIGNING_INPUT(jobj):
         for k in NOTIFICATION_SIGNING_INPUT_KEY
         if k in jobj
     ])
-
-
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA
-from Crypto.Util.asn1 import DerSequence
-from Crypto.Signature import PKCS1_v1_5
-
-from base64 import b64decode, standard_b64decode
 
 
 def import_pubkey_from_x509(pem):

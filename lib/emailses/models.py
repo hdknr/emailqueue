@@ -51,9 +51,6 @@ class Topic(BaseModel):
     COMPLAINT = 1
     DELIVERY = 2
 
-    service = models.ForeignKey(
-        Service, null=True, blank=True, default=None, )
-
     source = models.ForeignKey(
         Source, null=True, blank=True, default=None, )
 
@@ -74,7 +71,7 @@ class Topic(BaseModel):
 
     def __unicode__(self):
         return u"{0} {1}".format(
-            self.service.__unicode__(),
+            self.source.__unicode__(),
             self.get_topic_display())
 
 

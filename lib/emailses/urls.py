@@ -3,7 +3,5 @@ import views
 
 
 urlpatterns = [
-    url(r'bounce', views.bounce, name='emailses_bounce'),
-    url(r'complaint', views.complaint, name='emailses_complaint'),
-    url(r'delivery', views.delivery, name='emailses_delivery'),
+    url(r'(?P<topic>.+)', views.notify, name='emailses_notify'),
 ]

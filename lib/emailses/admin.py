@@ -6,7 +6,7 @@ import json
 import models
 
 
-class TopicAdminInline(admin.StackedInline):
+class TopicAdminInline(admin.TabularInline):
     model = models.Topic
     max_num = 3
 
