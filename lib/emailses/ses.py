@@ -64,6 +64,9 @@ class SnsMessage(object):
     def __getattr__(self, name):
         return self.data.get(name, None)
 
+    def format(self, indent=2, *args, **kwargs):
+        return json.dumps(self.data, indent=2, *args, **kwargs)
+
     @property
     def Message(self):
         def _cache(self):

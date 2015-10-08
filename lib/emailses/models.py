@@ -51,7 +51,9 @@ class Topic(BaseModel):
         verbose_name_plural = _('SNS Topic')
 
     def __unicode__(self):
-        return self.arn
+        return u"{0} {1}".format(
+            self.service.__unicode__(),
+            self.get_topic_display())
 
 
 class Notification(BaseModel, methods.Notification):

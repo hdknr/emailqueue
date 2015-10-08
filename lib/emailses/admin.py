@@ -1,6 +1,34 @@
-# from django.contrib import admin
-# from django.utils.translation import ugettext_lazy as _
+from django.contrib import admin
+from django import template
+from django.utils.translation import ugettext_lazy as _
 from emailqueue.admin import register
+import json
 
+
+class NotificationAdmin(admin.ModelAdmin):
+    list_excludes = ('created_at', 'headers', )
+    list_filter = ('topic', )
+    readonly_fields = ('message_json', 'headers_json', )
+
+    def message_json(self, obj):
+        return template.Template('''
+<pre>
+{{ m }}
+</pre>
+''',).render(template.Context(dict(m=obj.message_object.format())))
+
+    message_json.short_description = _('SNS Message')
+    message_json.allow_tags = True
+
+    def headers_json(self, obj):
+        m = json.dumps(obj.headers_object, indent=2)
+        return template.Template('''
+<pre>
+{{ m }}
+</pre>
+''',).render(template.Context(dict(m=m)))
+
+    headers_json.short_description = _('SNS Headers')
+    headers_json.allow_tags = True
 
 register(__name__, globals())
