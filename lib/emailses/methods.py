@@ -2,8 +2,10 @@ import json
 from datetime import datetime
 from enum import Enum
 
-import ses
+import boto
 import requests
+
+import ses
 
 
 class BaseObjectSerializer(json.JSONEncoder):
@@ -33,6 +35,24 @@ class Service(object):
                 cert_url=url,
                 cert=requests.get(url).text)
         return cert
+
+    @property
+    def connection(self):
+
+        def _cache():
+            self._conn = boto.connect_ses(
+                aws_access_key_id=self.key,
+                aws_secret_access_key=self.secret)
+            return self._conn
+
+        return getattr(self, '_conn', _cache())
+
+    def send_raw_message(self, addr_from, addr_to, raw_message):
+        self.connection.send_raw_email(
+            raw_message=raw_message,
+            source=addr_from,
+            destinations=addr_to,
+        )
 
 
 class Notification(object):
