@@ -8,7 +8,7 @@ import json
 class NotificationAdmin(admin.ModelAdmin):
     list_excludes = ('created_at', 'headers', )
     list_filter = ('topic', )
-    readonly_fields = ('sns_json', 'headers_json', 'ses_json', )
+    readonly_fields = ('sns_json', 'ses_json', 'headers_json', )
 
     def sns_json(self, obj):
         return template.Template('''

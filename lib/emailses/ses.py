@@ -56,15 +56,28 @@ def verify_pycrypto(pem, signing_input, b64signature):
     return verifier.verify(dig, sig)
 
 
-class SnsMessage(object):
-    def __init__(self, text):
-        self.data = json.loads(text)
+class BaseMessage(object):
+
+    def __init__(self, data):
+        if isinstance(data, basestring):
+            self.data = json.loads(data)
+        elif isinstance(data, dict):
+            self.data = data
+        else:
+            self.data = {}
 
     def __getattr__(self, name):
         return self.data.get(name, None)
 
     def format(self, indent=2, *args, **kwargs):
         return json.dumps(self.data, indent=2, *args, **kwargs)
+
+
+class SnsMessage(BaseMessage):
+    '''
+    - SignatureVersion, Timestamp,Signature, Type, SigningCertURL,
+      MessageId, Message(SesMessage), UnsubscribeURL, TopicArn
+    '''
 
     @property
     def Message(self):
@@ -89,33 +102,88 @@ class SnsMessage(object):
             cert, self.singin_input, self.Signature)
 
 
-class SesMessage(object):
-    def __init__(self, text):
-        self.data = json.loads(text)
+class SesMessage(BaseMessage):
+    '''
+    - notificationType,
+    - mail(MailMessage)
+    - bounce(BounceMessage)
+    '''
 
-    def format(self, indent=2, *args, **kwargs):
-        return json.dumps(self.data, indent=2, *args, **kwargs)
+    @property
+    def mail(self):
+        '''
+        - timestamp, destination(list(address)), source, messageId,
+        sendingAccountId, sourceArn
+        '''
+        def _cache():
+            self._mail = BaseMessage(self.data.get('mail', {}))
+            return self._mail
+
+        return getattr(self, '_mail', _cache())
+
+    @property
+    def bounce(self):
+        def _cache():
+            self._bounce = BounceMessage(self.data.get('bounce', {}))
+            return self._bounce
+
+        return getattr(self, '_bounce', _cache())
+
+    @property
+    def delivery(self):
+        '''
+        - processingTimeMillis, timestamp,
+          reportingMTA, recipients(list(address)),
+          smtpResponse,
+        '''
+        def _cache():
+            self._delivery = BaseMessage(self.data.get('delivery', {}))
+            return self._delivery
+
+        return getattr(self, '_delivery', _cache())
+
+    @property
+    def complaint(self):
+        def _cache():
+            self._complaint = ComplaintMessage(self.data.get('complaint', {}))
+            return self._complaint
+
+        return getattr(self, '_complaint', _cache())
 
 
-class Api(object):
+class BounceMessage(BaseMessage):
+    '''
+    - feedbackId, timestamp, reportingMTA, bounceSubType, bounceType
+    - bouncedRecipients: list(BounceRecipient)
+    '''
+    @property
+    def bouncedRecipients(self):
+        ''' list
+        - status, diagnosticCode, emailAddress, action
+        '''
+        def _cache(self):
+            self._bouncedRecipients = [
+                BaseMessage(data) for data
+                in self.data.get('bouncedRecipients', [])]
+            return self._bouncedRecipients
 
-    def process_notification(self, notification):
-        if not self.verify_notification(notification):
-            return
-        #: TODO: check other information...
+        return getattr(self, '_bouncedRecipients', _cache(self))
 
-        jobj = notification.json_message
-        message = jobj and json.loads(jobj.get('Message', '{}'))
-        if message and message.get('notificationType') == 'Bounce':
-            bounces = message.get('bounce', {}).get('bouncedRecipients', [])
-            for bounce in bounces:
-                addr = bounce.get('emailAddress', None)
-                if not addr:
-                    continue
 
-                address, created = \
-                    self.service.bounceaddress_set.get_or_create(
-                        address=addr
-                    )
-                # BounceLog(address=address, message=json.dumps(bounce)).save()
-                # TODO: recalcualte BounceAddress count
+class ComplaintMessage(BaseMessage):
+    '''
+    - complainedRecipients, userAgent, feedbackId, timestamp,
+      complaintFeedbackType
+    '''
+    @property
+    def complainedRecipients(self):
+        ''' list
+        - emailAddress
+        '''
+        def _cache(self):
+            self._complainedRecipients = [
+                BaseMessage(data) for data
+                in self.data.get('complainedRecipients', [])]
+            return self._bouncedRecipients
+
+        return getattr(self, '_complainedRecipients', _cache(self))
