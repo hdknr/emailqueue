@@ -8,17 +8,17 @@ import json
 class NotificationAdmin(admin.ModelAdmin):
     list_excludes = ('created_at', 'headers', )
     list_filter = ('topic', )
-    readonly_fields = ('message_json', 'headers_json', )
+    readonly_fields = ('sns_json', 'headers_json', 'ses_json', )
 
-    def message_json(self, obj):
+    def sns_json(self, obj):
         return template.Template('''
 <pre>
 {{ m }}
 </pre>
 ''',).render(template.Context(dict(m=obj.message_object.format())))
 
-    message_json.short_description = _('SNS Message')
-    message_json.allow_tags = True
+    sns_json.short_description = _('SNS Message')
+    sns_json.allow_tags = True
 
     def headers_json(self, obj):
         m = json.dumps(obj.headers_object, indent=2)
@@ -30,5 +30,15 @@ class NotificationAdmin(admin.ModelAdmin):
 
     headers_json.short_description = _('SNS Headers')
     headers_json.allow_tags = True
+
+    def ses_json(self, obj):
+        return template.Template('''
+<pre>
+{{ m }}
+</pre>
+''',).render(template.Context(dict(m=obj.message_object.Message.format())))
+
+    ses_json.short_description = _('SES Message')
+    ses_json.allow_tags = True
 
 register(__name__, globals())

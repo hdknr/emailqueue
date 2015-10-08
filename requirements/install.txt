@@ -5,3 +5,4 @@ Celery
 requests
 boto
 django-ses
+pycrypto

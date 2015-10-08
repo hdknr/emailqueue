@@ -69,7 +69,10 @@ class SnsMessage(object):
     @property
     def Message(self):
         def _cache(self):
-            self._Message = SesMessage(self.data['Message'])
+            if self.Type == u'Notification':
+                self._Message = SesMessage(self.data['Message'])
+            else:
+                self._Message = SesMessage('{}')
             return self._Message
 
         return getattr(self, '_Message', _cache(self))
@@ -89,6 +92,9 @@ class SnsMessage(object):
 class SesMessage(object):
     def __init__(self, text):
         self.data = json.loads(text)
+
+    def format(self, indent=2, *args, **kwargs):
+        return json.dumps(self.data, indent=2, *args, **kwargs)
 
 
 class Api(object):
