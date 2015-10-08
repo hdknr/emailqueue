@@ -28,6 +28,24 @@ class Service(BaseModel, methods.Service):
         return self.name
 
 
+class Source(BaseModel, methods.Source):
+    service = models.ForeignKey(
+        Service, null=True, blank=True, default=None, )
+
+    address = models.EmailField(_('Address'), max_length=100)
+
+    arn = models.CharField(
+        _('Source Identity Arn'), help_text=_('Source Identity Arn'),
+        max_length=100, null=True, default=None, blank=True)
+
+    class Meta:
+        verbose_name = _('SES Source')
+        verbose_name_plural = _('SES Source')
+
+    def __unicode__(self):
+        return self.address
+
+
 class Topic(BaseModel):
     BOUNCE = 0
     COMPLAINT = 1
@@ -35,6 +53,9 @@ class Topic(BaseModel):
 
     service = models.ForeignKey(
         Service, null=True, blank=True, default=None, )
+
+    source = models.ForeignKey(
+        Source, null=True, blank=True, default=None, )
 
     topic = models.IntegerField(
         _('Topic'), choices=(
@@ -49,6 +70,7 @@ class Topic(BaseModel):
     class Meta:
         verbose_name = _('SNS Topic')
         verbose_name_plural = _('SNS Topic')
+        unique_together = (('source', 'topic', ), )
 
     def __unicode__(self):
         return u"{0} {1}".format(

@@ -38,7 +38,6 @@ class Service(object):
 
     @property
     def connection(self):
-
         def _cache():
             self._conn = boto.connect_ses(
                 aws_access_key_id=self.key,
@@ -46,6 +45,15 @@ class Service(object):
             return self._conn
 
         return getattr(self, '_conn', _cache())
+
+
+class Source(object):
+    @property
+    def connectiont(self):
+        return self.service.connection
+
+    def cert(self, url):
+        return self.service.cert(url)
 
     def send_raw_message(self, addr_from, addr_to, raw_message):
         self.connection.send_raw_email(
@@ -93,15 +101,7 @@ class Notification(object):
     @property
     def cert(self):
         topic = self._topic
-        return topic.service.cert(self.message_object.SigningCertURL)
-
-    @property
-    def signing_input(self):
-        return ses.NOTIFICATION_SIGNING_INPUT(self.message_object)
-
-    @property
-    def signature(self):
-        return ses.SIGNATURE(self.message_object)
+        return topic.source.cert(self.message_object.SigningCertURL)
 
     def is_valid(self):
         cert = self.cert

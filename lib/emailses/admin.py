@@ -3,6 +3,18 @@ from django import template
 from django.utils.translation import ugettext_lazy as _
 from emailqueue.admin import register
 import json
+import models
+
+
+class TopicAdminInline(admin.StackedInline):
+    model = models.Topic
+    max_num = 3
+
+
+class SourceAdmin(admin.ModelAdmin):
+    list_excludes = ('created_at', )
+    list_filter = ('service', )
+    inlines = [TopicAdminInline, ]
 
 
 class NotificationAdmin(admin.ModelAdmin):
