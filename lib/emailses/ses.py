@@ -25,23 +25,6 @@ def NOTIFICATION_SIGNING_INPUT(jobj):
     ])
 
 
-def SIGNATURE(jobj):
-    return jobj['Signature']
-
-
-def CERT_URL(jobj):
-    return jobj['SigningCertURL']
-
-
-def TOPIC(jobj):
-    return jobj.get('TopicArn', '')
-
-
-def get_cert(url):
-    res = requests.get(url)
-    return res.text
-
-
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA
 from Crypto.Util.asn1 import DerSequence
@@ -72,6 +55,38 @@ def verify_pycrypto(pem, signing_input, b64signature):
     dig = SHA.new(signing_input)
 
     return verifier.verify(dig, sig)
+
+
+class SnsMessage(object):
+    def __init__(self, text):
+        self.data = json.loads(text)
+
+    def __getattr__(self, name):
+        return self.data.get(name, None)
+
+    @property
+    def Message(self):
+        def _cache(self):
+            self._Message = SesMessage(self.data['Message'])
+            return self._Message
+
+        return getattr(self, '_Message', _cache(self))
+
+    def confirm_subscribe_url(self, jobj):
+        return requests.get(self.SubscribeURL)
+
+    @property
+    def singin_input(self):
+        return NOTIFICATION_SIGNING_INPUT(self.data)
+
+    def verify(self, cert):
+        return verify_pycrypto(
+            cert, self.singin_input, self.Signature)
+
+
+class SesMessage(object):
+    def __init__(self, text):
+        self.data = json.loads(text)
 
 
 class Api(object):
