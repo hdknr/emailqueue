@@ -54,6 +54,13 @@ class Service(object):
             destinations=addr_to,
         )
 
+    def verify_address(self, address):
+        '''
+        http://boto.readthedocs.org/en/latest/ses_tut.html
+        #verifying-a-sender-email-address
+        '''
+        self.connection.verify_email_address(address)
+
 
 class Notification(object):
 

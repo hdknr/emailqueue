@@ -1,4 +1,3 @@
-import boto
 import json
 import requests
 
@@ -93,37 +92,6 @@ class SesMessage(object):
 
 
 class Api(object):
-    name = "Amazon SES"
-
-    def send(self, email):
-        self.connection.send_raw_email(
-            raw_message=email.message,
-            source=email.address_from,
-            destinations=email.address_to
-        )
-
-    def verify(self, address):
-        self.connection.verify_email_address(address)
-
-    def notify_path(self):
-        # return SnsResource().get_resource_uri() + "%d/" % self.service.id
-        return ''
-
-    def verify_notification(self, notification):
-        jobj = notification.json_message
-
-        if not jobj:
-            return False
-
-        sinput = NOTIFICATION_SIGNING_INPUT(jobj)
-
-        if not self.service.public_key:
-            res = requests.get(jobj['SigningCertURL'])
-            self.service.public_key = res.text
-            self.service.save()
-
-        return verify_pycrypto(
-            self.service.public_key, sinput, jobj['Signature'])
 
     def process_notification(self, notification):
         if not self.verify_notification(notification):
